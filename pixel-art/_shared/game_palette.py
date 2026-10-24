@@ -1,0 +1,25 @@
+"""Re-export shared palette for build scripts (add repo ``scripts/`` to sys.path)."""
+
+from sparkpix.game_palette import (  # noqa: F401
+    ACCENT_GOLD,
+    ACCENT_GREEN,
+    ACCENT_RED,
+    DIRT,
+    FIRE,
+    GRASS,
+    HAIR,
+    INK,
+    MAGIC,
+    METAL,
+    PAPER,
+    SHADOW,
+    SKIN,
+    SPARK_GAME,
+    STONE,
+    TRANSPARENT,
+    WATER,
+    describe,
+    export_json,
+    index_of,
+    palette_for_sprite,
+)

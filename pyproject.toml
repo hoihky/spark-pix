@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparkpix"
+version = "0.1.0"
+description = "Pillow pixel art toolkit and Spark engine exporters"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = ["Pillow>=10.0.0"]
+
+[project.scripts]
+sparkpix = "sparkpix.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["scripts"]

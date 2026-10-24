@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>spark-pix — Pixel art toolkit &amp; Cursor agent skill for Spark</title>
+  <meta name="description" content="spark-pix generates 2D pixel game art with Python and Pillow: sprites, animation, tilesets, and Spark engine atlases. Includes a Cursor agent skill and CLI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="site/css/site.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.8/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark', securityLevel: 'loose' });</script>
+</head>
+<body>
+  <div class="site">
+    <header class="topbar">
+      <a href="index.html" class="brand">spark-pix</a>
+      <nav class="topbar-nav" aria-label="Primary">
+        <a href="#overview">Overview</a>
+        <a href="#workflow">Workflow</a>
+        <a href="#toolkit">Toolkit</a>
+        <a href="#spark">Spark export</a>
+        <a href="#quick-start">Quick start</a>
+        <a href="https://hoihky.github.io/spark/" target="_blank" rel="noopener">Spark Engine</a>
+      </nav>
+    </header>
+
+    <main class="portfolio-layout">
+      <div class="portfolio-main doc-body">
+        <section class="hero" id="top">
+          <img
+            class="hero-logo"
+            src="media/spark-pix-logo.svg"
+            alt="spark-pix logo"
+            width="120"
+            height="120"
+          >
+          <div class="hero-text">
+            <h1>spark-pix</h1>
+            <p class="hero-tagline">
+              <strong>spark-pix</strong> is a <strong>Cursor agent skill</strong> and <strong>Python</strong> toolkit
+              for generating <strong>2D pixel game art</strong> with <strong>Pillow</strong> only: characters,
+              flipbook animation, tilesets, and projectiles. Every asset is a regenerable <code>build.py</code> that
+              exports PNG atlases, GIF previews, and <code>.spark-atlas.json</code> manifests for the
+              <a href="https://hoihky.github.io/spark/">Spark game engine</a> <code>SpriteAnimatorComponent</code>.
+            </p>
+            <div class="hero-links">
+              <a href="#quick-start">Quick start</a>
+              <a href="#documentation">Further reading</a>
+              <a href="#toolkit">Repository layout</a>
+            </div>
+          </div>
+        </section>
+
+        <section id="overview">
+          <h2 class="section-title">Overview</h2>
+          <p>
+            spark-pix targets artists and agents building content for Spark’s 2D stack: uniform-grid sprite sheets,
+            nearest-filter textures, and optional Tiled TSX tilesets. The skill teaches a repeatable loop—brief,
+            rig-based drawing, preview critique, validate, ship—without external paint tools or diffusion models.
+          </p>
+
+          <div class="pillar-grid">
+            <article class="pillar-card">
+              <h3>Regenerable source</h3>
+              <p>Art lives in <code>pixel-art/&lt;name&gt;/build.py</code>. Re-run to change palettes, poses, or clip timing—never hand-edit exported PNGs.</p>
+            </article>
+            <article class="pillar-card">
+              <h3>Humanoid rig rules</h3>
+              <p><code>references/humanoid-hero.md</code> defines proportions, filled limbs, and silhouette checks so heroes read as people—not stick figures.</p>
+            </article>
+            <article class="pillar-card">
+              <h3>Spark-ready export</h3>
+              <p><code>save_spritesheet()</code> writes <code>*.spark-atlas.json</code> aligned with <code>SpriteAnimatorComponent</code> uniform grids (frame 0 = bottom-left).</p>
+            </article>
+            <article class="pillar-card">
+              <h3>Agent + CLI</h3>
+              <p>Load <code>SKILL.md</code> in Cursor, or run <code>python -m sparkpix</code> for validate, palette, manifest, and reference study helpers.</p>
+            </article>
+          </div>
+
+          <ul class="skill-list" aria-label="Technologies">
+            <li>Python 3.10+</li>
+            <li>Pillow</li>
+            <li>Cursor Agent Skill</li>
+            <li>Spark 2D sprites</li>
+            <li>Sprite atlases</li>
+            <li>Tiled TSX</li>
+            <li>Flipbook GIF</li>
+            <li>MIT</li>
+          </ul>
+        </section>
+
+        <section id="workflow">
+          <h2 class="section-title">Agent workflow</h2>
+          <p class="section-lead">The skill’s quality engine is see → critique → fix on scaled previews before shipping atlases.</p>
+          <div class="mermaid-wrap">
+            <pre class="mermaid">
+flowchart LR
+    Brief[Brief &amp; references] --> Build[build.py + sparkpix API]
+    Build --> Run[Run script]
+    Run --> Preview[preview PNG / GIF]
+    Preview --> Critique{Silhouette OK?}
+    Critique -->|no| Build
+    Critique -->|yes| Validate[sparkpix validate]
+    Validate --> Ship[PNG + spark-atlas.json]
+    Ship --> Spark[Spark assets/sprites/]
+            </pre>
+          </div>
+        </section>
+
+        <section id="toolkit">
+          <h2 class="section-title">Toolkit &amp; layout</h2>
+
+          <h3 class="subsection-title">Python package</h3>
+          <table>
+            <thead>
+              <tr><th>Module / CLI</th><th>Role</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>scripts/sparkpix/</code></td><td><code>Sprite</code> canvas, colors, export, tilesets, validation.</td></tr>
+              <tr><td><code>python -m sparkpix</code></td><td><code>validate</code>, <code>palette</code>, <code>manifest</code>, <code>study</code>.</td></tr>
+              <tr><td><code>scripts/validate.py</code></td><td>Atlas dimension checks (also via CLI).</td></tr>
+            </tbody>
+          </table>
+
+          <h3 class="subsection-title">Repository paths</h3>
+          <table>
+            <thead>
+              <tr><th>Path</th><th>Contents</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>SKILL.md</code></td><td>Cursor agent instructions and routing to references.</td></tr>
+              <tr><td><code>pixel-art/</code></td><td>Per-asset <code>build.py</code> projects (hero, robot, examples).</td></tr>
+              <tr><td><code>references/</code></td><td>Humanoid rules, techniques, Spark export, paths &amp; privacy.</td></tr>
+              <tr><td><code>spark-integration/</code></td><td>Notes for Spark C++ atlas loader and demo menu entry.</td></tr>
+              <tr><td><code>assets/for-spark/</code></td><td>Small bundled sample atlases (regenerate from examples).</td></tr>
+            </tbody>
+          </table>
+
+          <h3 class="subsection-title">Sample projects</h3>
+          <ul class="demo-list">
+            <li><code>pixel-art/vanguard_hero/</code> — side-view RPG swordsman (idle, walk, run, attack, jump, die)</li>
+            <li><code>pixel-art/robot_ranger/</code> — mech with shoot clip + <code>bullets/bolt.png</code></li>
+            <li><code>pixel-art/example_slime/</code> — minimal animated slime atlas</li>
+            <li><code>pixel-art/example_tiles/</code> — TSX tileset with Spark gameplay properties</li>
+          </ul>
+        </section>
+
+        <section id="spark">
+          <h2 class="section-title">Spark engine integration</h2>
+          <p>
+            Copy built PNG + <code>*.spark-atlas.json</code> into your Spark tree at
+            <code>assets/sprites/&lt;pack-id&gt;/</code> (sibling repo convention:
+            <code>../spark/assets/sprites/</code>). Load with
+            <code>TryLoadSparkPixAtlasManifest</code> or wire clips manually—see
+            <code>spark-integration/INTEGRATION.md</code> and <code>references/spark-export.md</code> in the repo checkout.
+          </p>
+          <p>
+            SparkDemo includes menu entry <strong>Spark-pix atlas</strong> (demo #30) for sample slime atlases when
+            the engine is built with bundled <code>assets/sprites/spark_pix/</code> content.
+          </p>
+        </section>
+
+        <section id="quick-start">
+          <h2 class="section-title">Quick start</h2>
+          <p>From the repository root:</p>
+          <pre><code>python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e .
+
+PYTHONPATH=scripts python3 pixel-art/example_slime/build.py
+python -m sparkpix validate pixel-art/example_slime/out</code></pre>
+          <p>Install the skill in Cursor by pointing your skills directory at this repo, then invoke <strong>spark-pix</strong> when requesting new art.</p>
+        </section>
+
+        <section id="documentation">
+          <h2 class="section-title">Further reading</h2>
+          <p>In the repository checkout (not linked from this page):</p>
+          <table>
+            <thead>
+              <tr><th>Document</th><th>Topic</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>references/humanoid-hero.md</code></td><td>Hero proportions and anti-patterns</td></tr>
+              <tr><td><code>references/animation.md</code></td><td>Frame counts, timing, puppeting</td></tr>
+              <tr><td><code>references/spark-export.md</code></td><td>Atlas and TSX export formats</td></tr>
+              <tr><td><code>references/paths-and-privacy.md</code></td><td>No committed absolute paths or secrets</td></tr>
+              <tr><td><code>README.md</code></td><td>Install, CLI, and skill usage</td></tr>
+              <tr><td><code>SKILL.md</code></td><td>Cursor agent skill entry point</td></tr>
+              <tr><td><code>LICENSE</code></td><td>MIT license text</td></tr>
+            </tbody>
+          </table>
+          <p>External Spark docs:</p>
+          <ul class="demo-list">
+            <li><a href="https://hoihky.github.io/spark/">Spark documentation</a> — engine architecture, 2D sprites, tilemaps</li>
+            <li><a href="https://hoihky.github.io/spark/programming-guide/site/2-2d-graphics/01-sprites.html">Spark sprites guide</a> — runtime sprite components</li>
+            <li><a href="https://github.com/hoihky/spark" target="_blank" rel="noopener">Spark on GitHub</a></li>
+          </ul>
+        </section>
+
+        <footer class="site-footer">
+          <p>
+            spark-pix · MIT License
+            · <a href="https://hoihky.github.io/spark/" target="_blank" rel="noopener">Spark Game Engine</a>
+            · <a href="https://github.com/hoihky/spark" target="_blank" rel="noopener">Spark on GitHub</a>
+          </p>
+        </footer>
+      </div>
+
+      <aside class="toc" aria-label="On this page">
+        <p class="toc-title">On this page</p>
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#workflow">Workflow</a></li>
+          <li><a href="#toolkit">Toolkit</a></li>
+          <li class="toc-h3"><a href="#toolkit">Sample projects</a></li>
+          <li><a href="#spark">Spark export</a></li>
+          <li><a href="#quick-start">Quick start</a></li>
+          <li><a href="#documentation">Further reading</a></li>
+        </ul>
+      </aside>
+    </main>
+  </div>
+</body>
+</html>
