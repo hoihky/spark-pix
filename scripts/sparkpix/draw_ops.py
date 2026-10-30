@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from collections import deque
 from typing import Callable, List, Optional, Sequence, Tuple
 
@@ -261,3 +262,33 @@ def replace_color(img: Image.Image, old: RGBA, new: RGBA) -> None:
         for x in range(w):
             if img.getpixel((x, y)) == old:
                 img.putpixel((x, y), new)
+
+
+def capsule(
+    img: Image.Image,
+    x0: int,
+    y0: int,
+    x1: int,
+    y1: int,
+    radius: int,
+    color: RGBA,
+    mask: MaskFn = None,
+) -> None:
+    """Filled limb segment (production humanoids: radius >= 2)."""
+    r = max(1, radius)
+    y_min = min(y0, y1) - r
+    y_max = max(y0, y1) + r
+    x_min = min(x0, x1) - r
+    x_max = max(x0, x1) + r
+    dx, dy = x1 - x0, y1 - y0
+    seg_len_sq = dx * dx + dy * dy
+    for y in range(y_min, y_max + 1):
+        for x in range(x_min, x_max + 1):
+            if seg_len_sq == 0:
+                d = math.hypot(x - x0, y - y0)
+            else:
+                t = max(0.0, min(1.0, ((x - x0) * dx + (y - y0) * dy) / seg_len_sq))
+                px, py = x0 + t * dx, y0 + t * dy
+                d = math.hypot(x - px, y - py)
+            if d <= r + 0.45:
+                set_px(img, x, y, color, mask)

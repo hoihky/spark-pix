@@ -1,7 +1,9 @@
 # Vanguard hero (stoic swordsman)
 
-Side-view RPG pixel style: silver hair, olive tunic, brown kit, gold/blue greatsword hilt.  
-Regenerate with `build.py` — not traced from third-party art.
+**Production reference** — side-view RPG pixel art at shippable quality.  
+Regenerate with `build.py` only — not traced from third-party art.
+
+Follows [humanoid-hero.md](../../references/humanoid-hero.md) and [validations.md](../../references/validations.md).
 
 ## Clips
 
@@ -22,3 +24,5 @@ Atlas: **64×64** cells, 10 columns × 4 rows (34 frames).
 PYTHONPATH=scripts python3 pixel-art/vanguard_hero/build.py
 python -m sparkpix validate pixel-art/vanguard_hero/out
 ```
+
+Review `out/preview_idle.png` (8×) before treating other projects as done.

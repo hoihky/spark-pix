@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Example: idle + walk slime for Spark uniform-grid atlas."""
+"""Minimal API sample: idle + walk slime (not a humanoid production template).
+
+For shippable character quality see pixel-art/vanguard_hero/build.py.
+"""
 
 import sys
 from pathlib import Path

@@ -1,5 +1,8 @@
 # Spark engine integration
 
+**Production standard:** Deploy only **validated** 1× atlases and tilesets into Spark.
+Regenerate from `build.py` when art changes — do not patch PNGs in `assets/sprites/`.
+
 C++ sources live in the Spark repo (not duplicated here):
 
 | File | Role |
@@ -14,12 +17,18 @@ C++ sources live in the Spark repo (not duplicated here):
 After building art in spark-pix:
 
 ```bash
-python3 pixel-art/example_slime/build.py
+PYTHONPATH=scripts python3 pixel-art/example_slime/build.py
+python -m sparkpix validate pixel-art/example_slime/out
+
+# Spark as sibling checkout "spark"
 cp pixel-art/example_slime/out/slime.png pixel-art/example_slime/out/slime.spark-atlas.json \
-   /path/to/spark/assets/sprites/spark_pix/
+   ../spark/assets/sprites/spark_pix/
 ```
 
-Bundled copies: `assets/for-spark/` in this repo.
+Production packs (hero, mech, tiles): same pattern with `pixel-art/<pack>/out/` →
+`../spark/assets/sprites/<pack>/`. See [references/paths-and-privacy.md](../references/paths-and-privacy.md).
+
+Bundled samples: `assets/for-spark/` in this repo (regenerate from examples when updating).
 
 ## Run the demo
 
@@ -49,3 +58,10 @@ if (TryLoadSparkPixAtlasManifest("/sprites/spark_pix/slime.spark-atlas.json", ma
 ```
 
 Move `SparkPixAtlasLoad.*` from `spark/demo/` to a production module (e.g. `spark/scene/assets/`) when you ship a game.
+
+## Pre-ship checklist
+
+- [ ] `python -m sparkpix validate` passed on the pack copied to Spark
+- [ ] `SetSceneUploadNearest(true)` on pixel art textures
+- [ ] Clip names in C++ match manifest (`idle`, `walk`, …)
+- [ ] Tilemaps: TMX references TSX exported from spark-pix with gameplay properties set

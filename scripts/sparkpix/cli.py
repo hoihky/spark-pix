@@ -24,6 +24,20 @@ def _cmd_validate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_critique(args: argparse.Namespace) -> int:
+    from sparkpix.quality import critique_atlas_dir, format_report
+
+    root = Path(args.directory)
+    frames = tuple(int(x) for x in args.frames.split(",") if x.strip())
+    report = critique_atlas_dir(root, sample_frames=frames or (0,), max_colors=args.max_colors)
+    print(format_report(report))
+    if not report.ok():
+        return 1
+    if report.warn_count() and args.strict:
+        return 1
+    return 0
+
+
 def _cmd_study(args: argparse.Namespace) -> int:
     scripts = Path(__file__).resolve().parent.parent
     sys.path.insert(0, str(scripts))
@@ -79,7 +93,22 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("directory")
     v.set_defaults(func=_cmd_validate)
 
-    st = sub.add_parser("study", help="Analyze a reference PNG")
+    cr = sub.add_parser("critique", help="Heuristic art-quality warnings on atlas frames")
+    cr.add_argument("directory")
+    cr.add_argument(
+        "--frames",
+        default="0",
+        help="Comma-separated frame indices to sample (default: idle frame 0)",
+    )
+    cr.add_argument("--max-colors", type=int, default=32, help="Opaque RGB budget per frame")
+    cr.add_argument(
+        "--strict",
+        action="store_true",
+        help="Exit 1 when any WARN (for CI gates)",
+    )
+    cr.set_defaults(func=_cmd_critique)
+
+    st = sub.add_parser("study", help="Analyze a reference PNG or GIF")
     st.add_argument("input")
     st.add_argument("output")
     st.set_defaults(func=_cmd_study)

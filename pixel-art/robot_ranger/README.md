@@ -1,6 +1,6 @@
 # Robot ranger + bullets
 
-Mech hero with **shoot** clip (muzzle flash + recoil). Energy bolt sprites in `bullets/`.
+**Production reference** — mech hero with combat clip and separate projectile art.
 
 ## Build
 
@@ -33,8 +33,10 @@ Atlas: `out/robot_ranger.png` + `robot_ranger.spark-atlas.json` (64×64 cells, 8
 
 ## Spark (sketch)
 
-1. Copy assets to `../spark/assets/sprites/robot_ranger/` (or your Spark `assets/sprites/robot_ranger/`).
+1. Copy validated assets to `../spark/assets/sprites/robot_ranger/` (or your Spark `assets/sprites/robot_ranger/`).
 2. Player: `SpriteAnimatorComponent` + manifest; switch to **shoot** clip on fire input; spawn bullet at muzzle world position.
 3. Bullet: load `bolt.png`, `SetSceneUploadNearest(true)`, velocity along +X; despawn off-screen.
 
 Muzzle approx. (local to 64×64 cell, facing right): **(50, 30)** — tune from `preview_shoot.png`.
+
+See [spark-export.md](../../references/spark-export.md) and [INTEGRATION.md](../../spark-integration/INTEGRATION.md).

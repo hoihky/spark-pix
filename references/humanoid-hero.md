@@ -1,5 +1,8 @@
 # Humanoid hero (side-view RPG)
 
+**Production standard:** Default for **hero**, **warrior**, **adventurer**, or “professional RPG sprite” briefs.
+Must pass [validations.md](validations.md) before atlas export. Not for chibi/icons unless requested.
+
 Use this whenever the user asks for a **hero**, **warrior**, **adventurer**, or art matching modern pixel RPG reference (not chibi, not icons).
 
 ## Canvas
@@ -22,7 +25,9 @@ Side view facing **+X** (right). Target **~4.5–5 heads tall**.
 | Legs | ~45% | **Thigh and shin each ≥ 2 px wide**; visible knee bend |
 | Arms | reach mid-thigh | Upper arm + forearm **≥ 2 px thick** |
 
-**Never** draw legs or arms as a single-pixel-wide `line()` only — use `rect` / filled `ellipse` masses, then optional 1px inner shade.
+**Never** draw legs or arms as a single-pixel-wide `line()` only — use `rect` / filled `ellipse` masses, or **`character.limb(..., radius=2–3)`** (wraps `Sprite.capsule`).
+
+After all body parts are drawn on the frame, call **`character.finish_outside_outline(ink)`** for a readable hull (see `pixel-art/platform_hero/build.py`).
 
 ## Silhouette workflow
 
@@ -51,3 +56,5 @@ Side view facing **+X** (right). Target **~4.5–5 heads tall**.
 - Floating disjoint blocks (head stack separated from neck).
 - Neon palette on a “realistic” brief.
 - Skipping preview loop (minimum **2** critique passes on `preview_idle.png`).
+
+Reference implementation: `pixel-art/vanguard_hero/build.py`.

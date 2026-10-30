@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>spark-pix — Pixel art toolkit &amp; Cursor agent skill for Spark</title>
-  <meta name="description" content="spark-pix generates 2D pixel game art with Python and Pillow: sprites, animation, tilesets, and Spark engine atlases. Includes a Cursor agent skill and CLI.">
+  <meta name="description" content="spark-pix creates production-ready 2D pixel sprite sheets, animation atlases, and Tiled tilesets for real games. Python, Pillow, Spark engine export, Cursor agent skill.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -41,9 +41,10 @@
             <h1>spark-pix</h1>
             <p class="hero-tagline">
               <strong>spark-pix</strong> is a <strong>Cursor agent skill</strong> and <strong>Python</strong> toolkit
-              for generating <strong>2D pixel game art</strong> with <strong>Pillow</strong> only: characters,
-              flipbook animation, tilesets, and projectiles. Every asset is a regenerable <code>build.py</code> that
-              exports PNG atlases, GIF previews, and <code>.spark-atlas.json</code> manifests for the
+              for <strong>production-ready 2D pixel game art</strong> with <strong>Pillow</strong>: character sprite sheets,
+              flipbook animation, terrain tilesets, and projectiles at <strong>1×</strong> for real games. Every asset is a
+              regenerable <code>build.py</code> that exports PNG atlases, GIF previews, and
+              <code>.spark-atlas.json</code> manifests for the
               <a href="https://hoihky.github.io/spark/">Spark game engine</a> <code>SpriteAnimatorComponent</code>.
             </p>
             <div class="hero-links">
@@ -58,19 +59,24 @@
         <section id="overview">
           <h2 class="section-title">Overview</h2>
           <p>
-            spark-pix targets artists and agents building content for Spark’s 2D stack: uniform-grid sprite sheets,
-            nearest-filter textures, and optional Tiled TSX tilesets. The skill teaches a repeatable loop—brief,
-            rig-based drawing, preview critique, validate, ship—without external paint tools or diffusion models.
+            spark-pix targets <strong>shippable indie quality</strong> for Spark’s 2D stack: uniform-grid sprite sheets,
+            nearest-filter 1× textures, and Tiled TSX tilesets with gameplay properties. The skill enforces brief →
+            rig-based drawing → 8× preview critique (≥2 passes) → validate → ship—without external paint tools or
+            diffusion models.
           </p>
 
           <div class="pillar-grid">
+            <article class="pillar-card">
+              <h3>Production bar</h3>
+              <p>Readable silhouettes at 1×, stable animation pivots, 8–24 color palettes, named clips for code, and <code>sparkpix validate</code> before deploy.</p>
+            </article>
             <article class="pillar-card">
               <h3>Regenerable source</h3>
               <p>Art lives in <code>pixel-art/&lt;name&gt;/build.py</code>. Re-run to change palettes, poses, or clip timing—never hand-edit exported PNGs.</p>
             </article>
             <article class="pillar-card">
-              <h3>Humanoid rig rules</h3>
-              <p><code>references/humanoid-hero.md</code> defines proportions, filled limbs, and silhouette checks so heroes read as people—not stick figures.</p>
+              <h3>Humanoid rigs</h3>
+              <p>64×64 side RPG heroes use filled limbs (≥2 px), rig-driven poses, and <code>humanoid-hero</code> rules—not stick figures or slime-scale templates.</p>
             </article>
             <article class="pillar-card">
               <h3>Spark-ready export</h3>
@@ -143,10 +149,10 @@ flowchart LR
 
           <h3 class="subsection-title">Sample projects</h3>
           <ul class="demo-list">
-            <li><code>pixel-art/vanguard_hero/</code> — side-view RPG swordsman (idle, walk, run, attack, jump, die)</li>
-            <li><code>pixel-art/robot_ranger/</code> — mech with shoot clip + <code>bullets/bolt.png</code></li>
-            <li><code>pixel-art/example_slime/</code> — minimal animated slime atlas</li>
-            <li><code>pixel-art/example_tiles/</code> — TSX tileset with Spark gameplay properties</li>
+            <li><code>pixel-art/vanguard_hero/</code> — <strong>production</strong> side-view RPG swordsman (idle, walk, run, attack, jump, die)</li>
+            <li><code>pixel-art/robot_ranger/</code> — <strong>production</strong> mech with shoot clip + <code>bullets/bolt.png</code></li>
+            <li><code>pixel-art/example_tiles/</code> — <strong>production</strong> TSX tileset with Spark walk/collision props</li>
+            <li><code>pixel-art/example_slime/</code> — minimal API sample (not a humanoid quality target)</li>
           </ul>
         </section>
 
@@ -172,9 +178,14 @@ flowchart LR
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
 
+# Production-style hero (recommended)
+PYTHONPATH=scripts python3 pixel-art/vanguard_hero/build.py
+python -m sparkpix validate pixel-art/vanguard_hero/out
+
+# Minimal API smoke test
 PYTHONPATH=scripts python3 pixel-art/example_slime/build.py
 python -m sparkpix validate pixel-art/example_slime/out</code></pre>
-          <p>Install the skill in Cursor by pointing your skills directory at this repo, then invoke <strong>spark-pix</strong> when requesting new art.</p>
+          <p>Install the skill in Cursor from this repo (<code>SKILL.md</code>). Before sharing code, run <code>./scripts/audit_privacy.sh</code>.</p>
         </section>
 
         <section id="documentation">
@@ -185,6 +196,8 @@ python -m sparkpix validate pixel-art/example_slime/out</code></pre>
               <tr><th>Document</th><th>Topic</th></tr>
             </thead>
             <tbody>
+              <tr><td><code>references/validations.md</code></td><td>Production pre-ship checklist</td></tr>
+              <tr><td><code>references/patterns.md</code></td><td>Canvas sizes, tiles, atlas layout</td></tr>
               <tr><td><code>references/humanoid-hero.md</code></td><td>Hero proportions and anti-patterns</td></tr>
               <tr><td><code>references/animation.md</code></td><td>Frame counts, timing, puppeting</td></tr>
               <tr><td><code>references/spark-export.md</code></td><td>Atlas and TSX export formats</td></tr>

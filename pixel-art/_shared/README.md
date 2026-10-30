@@ -1,5 +1,7 @@
 # Shared art constants
 
+**Production standard:** One palette module per game pack so characters, tiles, and props match at 1×.
+
 Import from build scripts after adding the repo `scripts/` directory to `sys.path`:
 
 ```python
@@ -13,3 +15,5 @@ Export palette JSON for reference:
 ```bash
 python -m sparkpix palette export pixel-art/_shared/spark_game.palette.json
 ```
+
+See [references/palettes.md](../references/palettes.md), [character-api.md](../references/character-api.md), and [validations.md](../references/validations.md).

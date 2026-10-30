@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "sparkpix"
 version = "0.1.0"
-description = "Pillow pixel art toolkit and Spark engine exporters"
+description = "Production-ready 2D pixel art toolkit: sprite sheets, animation atlases, and Tiled tilesets for Spark"
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]

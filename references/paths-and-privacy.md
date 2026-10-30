@@ -1,5 +1,8 @@
 # Paths and privacy
 
+**Production standard:** Shippable repos contain no machine paths, secrets, or hand-edited exports.
+Run `./scripts/audit_privacy.sh` before every push; run `validate` on every atlas pack.
+
 ## Rules for this repo
 
 1. **No machine-specific absolute paths** in Python, config, docs, or JSON metadata  

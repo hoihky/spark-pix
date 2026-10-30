@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Example: 16x16 grass + wall tiles with Spark TSX properties."""
+"""Production-style tileset sample: 16×16 grass + wall with Spark TSX gameplay props.
+
+Extend with edge/corner kits per references/patterns.md for full terrain packs.
+"""
 
 import sys
 from pathlib import Path

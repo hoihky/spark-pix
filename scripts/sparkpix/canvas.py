@@ -203,6 +203,21 @@ class Sprite:
     def clear(self) -> None:
         self._frames[self._frame_idx][self._layer] = self._blank()
 
+    def capsule(
+        self,
+        x0: int,
+        y0: int,
+        x1: int,
+        y1: int,
+        radius: int,
+        color: ColorLike,
+        only: Optional[ColorLike] = None,
+    ) -> None:
+        c = self._color(color)
+        if c is None:
+            return
+        draw_ops.capsule(self._img(), x0, y0, x1, y1, radius, c, self._mask(only))
+
     def outline(self, color: ColorLike, where: str = "outside", only: Optional[ColorLike] = None) -> None:
         c = self._color(color)
         if c is None:
@@ -268,8 +283,15 @@ class Sprite:
         path: Union[str, Path],
         scale: int = 8,
         grid: bool = False,
+        matte: Optional[ColorLike] = None,
     ) -> None:
         flat = self.flatten_frame(self._frame_idx)
+        if matte is not None:
+            mc = self._color(matte)
+            if mc is not None:
+                base = Image.new("RGBA", (self._fw, self._fh), mc)
+                base.alpha_composite(flat)
+                flat = base
         if grid:
             preview_with_grid(flat, Path(path), scale=scale, cell=(self._fw, self._fh))
         else:

@@ -13,11 +13,14 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from sparkpix import Sprite, ramp  # noqa: E402
+from sparkpix import character as ch  # noqa: E402
+from sparkpix import rig  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out"
 W, H = 64, 64
 FOOT_Y = 61
 CANNON_LEN = 14
+MATTE = "#343848"
 
 CHASSIS = ramp("#5a6478", 4)
 CHASSIS_HI = ramp("#8aa0b8", 3)
@@ -43,6 +46,7 @@ class Rig:
     hip: Tuple[int, int] = (27, 40)
     shoulder: Tuple[int, int] = (30, 28)
     cannon_pivot: Tuple[int, int] = (36, 30)
+    head: Tuple[int, int] = (26, 17)
     cannon_deg: float = 0.0  # 0 = forward +X
     recoil: int = 0
     muzzle_flash: bool = False
@@ -52,30 +56,45 @@ class Rig:
     leg: float = 0.0
 
 
-def blade_tip(px: int, py: int, deg: float, length: float) -> Tuple[int, int]:
-    r = math.radians(deg)
-    return int(px + math.cos(r) * length), int(py + math.sin(r) * length)
-
-
-def fill_capsule(s: Sprite, x0: int, y0: int, x1: int, y1: int, radius: int, color) -> None:
-    r = max(1, radius)
-    for y in range(min(y0, y1) - r, max(y0, y1) + r + 1):
-        for x in range(min(x0, x1) - r, max(x0, x1) + r + 1):
-            dx, dy = x1 - x0, y1 - y0
-            if dx == 0 and dy == 0:
-                d = math.hypot(x - x0, y - y0)
-            else:
-                t = max(0, min(1, ((x - x0) * dx + (y - y0) * dy) / (dx * dx + dy * dy)))
-                px, py = x0 + t * dx, y0 + t * dy
-                d = math.hypot(x - px, y - py)
-            if d <= r + 0.4:
-                s.px(x, y, color)
+def finalize(r: Rig) -> Rig:
+    pts = rig.apply_shift(
+        r.dy,
+        r.lean,
+        r.foot_f,
+        r.foot_b,
+        r.knee_f,
+        r.knee_b,
+        r.hip,
+        r.shoulder,
+        r.cannon_pivot,
+        r.cannon_pivot,
+        r.head,
+    )
+    return Rig(
+        dy=0,
+        lean=0,
+        foot_f=pts["foot_f"],
+        foot_b=pts["foot_b"],
+        knee_f=pts["knee_f"],
+        knee_b=pts["knee_b"],
+        hip=pts["hip"],
+        shoulder=pts["shoulder"],
+        cannon_pivot=pts["hand"],
+        head=pts["head"],
+        cannon_deg=r.cannon_deg,
+        recoil=r.recoil,
+        muzzle_flash=r.muzzle_flash,
+        visor_glow=r.visor_glow,
+        die=r.die,
+        run=r.run,
+        leg=r.leg,
+    )
 
 
 def draw_leg(s: Sprite, hip: Tuple[int, int], knee: Tuple[int, int], foot: Tuple[int, int], back: bool) -> None:
     col = DARK[1] if back else CHASSIS[2]
-    fill_capsule(s, hip[0], hip[1], knee[0], knee[1], 3 if not back else 2, col)
-    fill_capsule(s, knee[0], knee[1], foot[0], foot[1], 3 if not back else 2, CHASSIS[1])
+    ch.limb(s, hip, knee, 3 if not back else 2, col)
+    ch.limb(s, knee, foot, 3 if not back else 2, CHASSIS[1])
     fx, fy = foot
     s.rect(fx - 4, fy - 2, fx + 4, fy, fill=DARK[2])
     s.rect(fx - 3, fy, fx + 5, fy + 1, fill=ACCENT[0])
@@ -94,7 +113,7 @@ def draw_torso(s: Sprite, r: Rig) -> None:
 
 
 def draw_head(s: Sprite, r: Rig) -> None:
-    cx, cy = 26 + r.lean, 17 + r.dy
+    cx, cy = r.head
     s.rect(cx - 5, cy - 4, cx + 7, cy + 8, fill=CHASSIS[2])
     s.rect(cx - 4, cy - 3, cx + 6, cy + 7, fill=CHASSIS[3], only="opaque")
     # visor slit
@@ -109,9 +128,9 @@ def draw_cannon(s: Sprite, r: Rig) -> None:
     px, py = r.cannon_pivot
     px -= r.recoil
     deg = r.cannon_deg
-    ex, ey = blade_tip(px, py, deg, CANNON_LEN)
-    fill_capsule(s, px, py, ex, ey, 3, CHASSIS[0])
-    fill_capsule(s, px, py - 1, ex, ey - 1, 2, CHASSIS_HI[1])
+    ex, ey = rig.tip(px, py, deg, CANNON_LEN)
+    ch.limb(s, (px, py), (ex, ey), 3, CHASSIS[0])
+    ch.limb(s, (px, py - 1), (ex, ey - 1), 2, CHASSIS_HI[1])
     s.rect(px - 2, py - 3, px + 2, py + 3, fill=DARK[1])
     if r.muzzle_flash:
         mx, my = ex, ey
@@ -121,31 +140,36 @@ def draw_cannon(s: Sprite, r: Rig) -> None:
         s.rect(mx, my - 2, mx + 5, my + 2, fill=MUZZLE)
 
 
-def draw_robot(s: Sprite, r: Rig) -> None:
+def draw_robot(s: Sprite, rig_in: Rig) -> None:
     s.clear()
-    if r.die > 0.1:
+    r = finalize(rig_in)
+    if rig_in.die > 0.1:
         r = Rig(
-            dy=r.dy + int(r.die * 6),
-            lean=r.lean + int(r.die * 8),
-            foot_f=(r.foot_f[0], r.foot_f[1]),
-            foot_b=(r.foot_b[0], r.foot_b[1]),
+            dy=r.dy,
+            lean=r.lean + int(rig_in.die * 8),
+            foot_f=r.foot_f,
+            foot_b=r.foot_b,
             knee_f=r.knee_f,
             knee_b=r.knee_b,
-            hip=(r.hip[0] + int(r.die * 4), r.hip[1] + int(r.die * 5)),
+            hip=(r.hip[0] + int(rig_in.die * 4), r.hip[1] + int(rig_in.die * 5)),
             shoulder=r.shoulder,
-            cannon_pivot=(r.cannon_pivot[0] - int(r.die * 3), r.cannon_pivot[1]),
-            cannon_deg=r.cannon_deg + r.die * 30,
+            cannon_pivot=(r.cannon_pivot[0] - int(rig_in.die * 3), r.cannon_pivot[1]),
+            head=r.head,
+            cannon_deg=r.cannon_deg + rig_in.die * 30,
             recoil=r.recoil,
             muzzle_flash=False,
             visor_glow=0,
-            die=r.die,
+            die=rig_in.die,
             leg=r.leg,
         )
+    cx = (r.foot_f[0] + r.foot_b[0]) // 2
+    ch.drop_shadow_oval(s, cx, FOOT_Y, INK, half_w=6)
     draw_leg(s, r.hip, r.knee_b, r.foot_b, back=True)
     draw_torso(s, r)
     draw_leg(s, r.hip, r.knee_f, r.foot_f, back=False)
     draw_head(s, r)
     draw_cannon(s, r)
+    ch.finish_outside_outline(s, INK)
 
 
 def walk_rig(phase: float) -> Rig:
@@ -229,17 +253,34 @@ def main() -> None:
         draw_robot(s, rig)
 
     OUT.mkdir(parents=True, exist_ok=True)
-    s.preview(OUT / "preview_idle.png", scale=8)
+    s.preview(OUT / "preview_idle.png", scale=8, matte=MATTE)
     shoot_start = next(c[1] for c in clips if c[0] == "shoot")
     s.frame(shoot_start + 2)
-    s.preview(OUT / "preview_shoot.png", scale=8)
+    s.preview(OUT / "preview_shoot.png", scale=8, matte=MATTE)
 
     for name, a, b, fps, loop in clips:
         s.tag_clip(name, a, b, fps=fps, loop=loop)
 
     s.save_gif(OUT / "robot_ranger.gif", scale=4)
-    s.save_spritesheet(OUT / "robot_ranger", columns=8, padding=0)
+    s.save_spritesheet(OUT / "robot_ranger", columns=8, padding=0, spark_json=True)
     s.save_project(OUT / "robot_ranger.sparkpix.json")
+
+    from sparkpix.quality import build_quality_meta, critique_atlas_dir, format_report, write_quality_sidecar
+
+    write_quality_sidecar(
+        OUT,
+        "robot_ranger",
+        build_quality_meta(
+            outline_ink=INK,
+            foot_y=FOOT_Y,
+            critique_frames=[0, shoot_start + 2],
+            humanoid=True,
+        ),
+    )
+    text = format_report(critique_atlas_dir(OUT))
+    if text != "OK (no quality warnings)":
+        print(text)
+
     print(s.stats())
     print("clips:", [c[0] for c in clips])
     print("wrote", OUT)
