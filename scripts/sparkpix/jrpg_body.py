@@ -178,3 +178,87 @@ def draw_q_elder_cape_torso(
     s.rect(hx - 4, y0 + 1, hx + 4, y1 - 1, fill=tunic[2], only="opaque")
     s.rect(hx - 4, hy, hx + 4, hy + 4, fill=pants[0])
     s.rect(hx - 3, hy + 1, hx + 3, hy + 5, fill=pants[1], only="opaque")
+
+
+def draw_q_dress_torso(
+    s: Sprite,
+    hip: Tuple[int, int],
+    *,
+    dress: ColorSeq,
+    trim: ColorSeq,
+    squash: float = 1.0,
+) -> None:
+    """Fitted bodice + flared skirt (heroine dress, side +X)."""
+    hx, hy = hip
+    sq = max(0.84, min(1.0, squash))
+    extra = int((1.0 - sq) * 3)
+    x0, x1 = hx - 6, hx + 7
+    bodice_y0, bodice_y1 = hy - 8 + extra, hy + 1
+    s.rect(x0, bodice_y0, x1, bodice_y1, fill=dress[0])
+    s.rect(x0 + 1, bodice_y0 + 1, x1 - 1, bodice_y1 - 1, fill=dress[2], only="opaque")
+    s.rect(x0 + 2, bodice_y0 + 2, x0 + 5, bodice_y0 + 6, fill=dress[-1], only="opaque")
+    s.rect(x1 - 2, bodice_y0 + 2, x1, bodice_y1 - 2, fill=dress[0], only="opaque")
+    s.rect(hx - 5, bodice_y0 - 3, hx + 6, bodice_y0 - 1, fill=trim[1])
+    s.rect(hx - 4, bodice_y0 - 2, hx + 5, bodice_y0 - 1, fill=trim[-1], only="opaque")
+    s.px(hx - 2, bodice_y0 - 2, trim[0])
+    waist = hy + 1
+    s.rect(x0, waist, x1, waist + 1, fill=trim[0])
+    skirt_y0, skirt_y1 = waist + 1, hy + 8
+    s.polygon([(x0, skirt_y0), (x1, skirt_y0), (x1 + 2, skirt_y1), (x0 - 1, skirt_y1)], fill=dress[0])
+    s.polygon([(x0 + 1, skirt_y0 + 1), (x1 - 1, skirt_y0 + 1), (x1 + 1, skirt_y1 - 1), (x0, skirt_y1 - 1)], fill=dress[1], only="opaque")
+    s.line(x0 + 2, skirt_y0 + 2, x0 + 1, skirt_y1 - 2, dress[-1])
+    s.px(x1, skirt_y0 + 3, trim[-1], only="opaque")
+
+
+def draw_q_chest_bridge_dress(
+    s: Sprite,
+    shoulder: Tuple[int, int],
+    *,
+    dress: ColorSeq,
+) -> None:
+    """Collar bridge under chin — dress fabric, not a neck."""
+    sx, sy = shoulder
+    y0, y1 = sy - 6, sy + 1
+    s.rect(sx - 5, y0, sx + 4, y1, fill=dress[0])
+    s.rect(sx - 4, y0 + 1, sx + 3, y1, fill=dress[2], only="opaque")
+    s.px(sx - 2, y0 + 1, dress[-1], only="opaque")
+
+
+def draw_q_arm_dress(
+    s: Sprite,
+    shoulder: Tuple[int, int],
+    elbow: Tuple[int, int],
+    hand: Tuple[int, int],
+    *,
+    dress: ColorSeq,
+    trim: ColorSeq,
+    skin: ColorSeq,
+) -> None:
+    """Puff sleeve + open hand (heroine)."""
+    ch.limb(s, shoulder, elbow, 3, dress[1])
+    s.px(shoulder[0], shoulder[1], trim[-1], only="opaque")
+    s.px(elbow[0] - 1, elbow[1], dress[-1], only="opaque")
+    ch.limb(s, elbow, hand, 2, skin[2])
+    hx, hy = hand
+    s.rect(hx - 1, hy - 2, hx + 2, hy + 1, fill=skin[2])
+    s.px(hx, hy - 2, skin[-1], only="opaque")
+    s.px(hx + 2, hy, skin[1], only="opaque")
+
+
+def draw_q_leg_dress(
+    s: Sprite,
+    hip: Tuple[int, int],
+    knee: Tuple[int, int],
+    foot: Tuple[int, int],
+    *,
+    back: bool,
+    stockings: ColorSeq,
+    shoe: ColorSeq,
+) -> None:
+    tr = 2 if back else 3
+    rd.limb_shaded(s, hip, knee, tr, stockings if not back else stockings[:3])
+    rd.limb_shaded(s, knee, foot, tr, stockings)
+    ch.limb(s, knee, foot, tr, stockings[1])
+    fx, fy = foot
+    s.rect(fx - 2, fy - 1, fx + 4, fy + 1, fill=shoe[1] if not back else shoe[0])
+    s.px(fx + 3, fy, shoe[-1], only="opaque")

@@ -243,6 +243,7 @@ Index: [references/README.md](references/README.md)
 |---------|----------------|
 | `pixel-art/ref_youth/` | Reference screenshot: spiky cyan hair, 2×3 eye, olive tunic |
 | `pixel-art/ref_elder/` | Reference screenshot: puffy hair, beard, hero eye, gold cape |
+| `pixel-art/rose_hero/` | Pink hair, expressive eye, ribbon, dress |
 | `pixel-art/example_tiles/` | TSX + gameplay props |
 | `pixel-art/example_slime/` | API sample only |
 

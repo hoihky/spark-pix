@@ -26,11 +26,13 @@ class JrpgHeadLook:
         ``quiff`` — forward swoop + tall crown.
         ``short`` — cropped cap + small nape (no long tail).
         ``puffy`` — round volume + heavy fringe (elder ref).
+        ``flowing`` — long layered locks + soft side bangs (heroine).
     eye_style:
         ``vertical`` — 2×3 strip: pupil column + sclera column (youth ref).
         ``hero`` — dark vertical tick under brow (elder ref).
+        ``expressive`` — 3×4 read: iris + bright sclera + sparkle (heroine).
     forehead:
-        ``none`` | ``bandana`` | ``wrap`` (thin strip).
+        ``none`` | ``bandana`` | ``wrap`` (thin strip) | ``ribbon`` (small bow).
     beard: hair ramp on lower face (hides jaw — no neck).
     fringe_over_eye: bangs shadow on **top row** of eye after it is drawn.
     """
@@ -75,6 +77,43 @@ def _draw_vertical_eye(
     return ex, ey, h
 
 
+def _draw_expressive_eye(
+    s: Sprite,
+    cx: int,
+    cy: int,
+    *,
+    pupil: ColorLike,
+    iris: ColorLike,
+    iris_shadow: ColorLike,
+    sclera: ColorLike,
+    paper: ColorLike,
+    lash: ColorLike,
+    cute: bool,
+) -> tuple[int, int, int]:
+    """3×4 profile eye: lash line, iris block, tall sclera + highlight."""
+    ex = cx + 3
+    ey = cy if cute else cy + 1
+    h = 4
+    for dx in range(3):
+        s.px(ex + dx, ey - 1, lash, only="opaque")
+    s.px(ex, ey, pupil)
+    s.px(ex, ey + 1, iris_shadow)
+    s.px(ex, ey + 2, iris_shadow)
+    s.px(ex, ey + 3, pupil)
+    s.px(ex + 1, ey, iris)
+    s.px(ex + 1, ey + 1, iris)
+    s.px(ex + 1, ey + 2, iris)
+    s.px(ex + 1, ey + 3, iris_shadow)
+    s.px(ex + 2, ey, sclera)
+    s.px(ex + 2, ey + 1, sclera)
+    s.px(ex + 2, ey + 2, sclera)
+    s.px(ex + 2, ey + 3, sclera)
+    s.px(ex + 2, ey, paper, only="opaque")
+    s.px(ex + 2, ey + 1, paper, only="opaque")
+    s.px(ex + 1, ey, paper, only="opaque")
+    return ex, ey, h
+
+
 def _draw_hero_eye_minimal(
     s: Sprite,
     cx: int,
@@ -115,6 +154,23 @@ def _apply_fringe_eye_cap(
     s.px(ex + 1, ey + 1, sclera)
     s.px(ex + 1, ey + 2, sclera)
     s.px(ex + 1, ey, hi, only="opaque")
+
+
+def _draw_hair_back_flowing(s: Sprite, cx: int, cy: int, hair: ColorSeq, *, q: int, qt: int, qb: int) -> None:
+    """Long hair mass behind shoulder — reads pink/golden heroine silhouette."""
+    dark, mid, light, hi = _hair_tones(hair)
+    s.ellipse(cx - 12 - q, cy - 1 - qt, cx + 2, cy + 16 + qb, fill=dark)
+    s.ellipse(cx - 11 - q, cy - qt, cx + 3, cy + 15 + qb, fill=hair[1])
+    s.rect(cx - 11 - q, cy + 5, cx - 6, cy + 18 + qb, fill=mid)
+    s.polygon(
+        [(cx - 12 - q, cy + 8), (cx - 13 - q, cy + 16 + qb), (cx - 8 - q, cy + 19 + qb), (cx - 7 - q, cy + 11)],
+        fill=dark,
+    )
+    s.polygon(
+        [(cx - 10 - q, cy + 10), (cx - 11 - q, cy + 18 + qb), (cx - 6 - q, cy + 20 + qb), (cx - 5 - q, cy + 13)],
+        fill=light,
+    )
+    s.line(cx - 9 - q, cy + 12, cx - 7 - q, cy + 17 + qb, hi)
 
 
 def _draw_hair_back(s: Sprite, cx: int, cy: int, hair: ColorSeq, *, q: int, qt: int, qb: int) -> None:
@@ -255,6 +311,14 @@ def _draw_forehead(s: Sprite, cx: int, cy: int, band: ColorSeq, *, kind: str, q:
         s.rect(cx - 3, cy - 4 - qt, cx + 4, cy - 4 - qt, fill=band[2], only="opaque")
         s.px(cx + 1, cy - 4 - qt, band[0])
         return
+    if kind == "ribbon":
+        s.px(cx - 1, cy - 5 - qt, band[1])
+        s.px(cx, cy - 6 - qt, band[2])
+        s.px(cx + 1, cy - 6 - qt, band[2])
+        s.px(cx + 2, cy - 5 - qt, band[1])
+        s.px(cx, cy - 4 - qt, band[0])
+        s.px(cx + 1, cy - 4 - qt, band[-1])
+        return
     s.rect(cx - 5 - q // 2, cy - 6 - qt, cx + 7 + q, cy - 5 - qt, fill=band[1])
     s.rect(cx - 4 - q // 2, cy - 5 - qt, cx + 6 + q, cy - 5 - qt, fill=band[2], only="opaque")
     s.px(cx + 2, cy - 5 - qt, band[0])
@@ -290,6 +354,20 @@ def _draw_fringe_bangs(
         s.px(cx + 1, cy - 5 - qt, dark)
         s.px(cx + 6 + q, cy - 3 - qt, light)
         return
+    if style == "flowing":
+        s.polygon(
+            [(cx - 1, cy - 4 - qt), (cx + 5 + q, cy - 5 - qt), (cx + 8 + q, cy - 2), (cx + 3, cy)],
+            fill=mid,
+            only="opaque",
+        )
+        s.polygon(
+            [(cx + 2, cy - 4 - qt), (cx + 7 + q, cy - 3 - qt), (cx + 6 + q, cy + 1), (cx + 3, cy + 1)],
+            fill=light,
+            only="opaque",
+        )
+        s.px(cx + 1, cy - 4 - qt, hi)
+        s.px(cx + 7 + q, cy - 1, dark, only="opaque")
+        return
     if style == "quiff":
         s.polygon([(cx + 1, cy - 3 - qt), (cx + 6 + q, cy - 2 - qt), (cx + 5 + q, cy + 1), (cx + 2, cy + 1)], fill=mid)
         s.px(cx + 4 + q, cy - 1 - qt, dark)
@@ -304,6 +382,19 @@ def _draw_fringe_bangs(
     )
     s.line(cx + 3, cy - 6 - qt, cx + 9 + q, cy - 3 - qt, hi)
     s.px(cx + 1, cy - 4 - qt, hi)
+
+
+def _draw_hair_style_flowing(s: Sprite, cx: int, cy: int, hair: ColorSeq, *, q: int, qt: int) -> None:
+    dark, mid, light, hi = _hair_tones(hair)
+    s.ellipse(cx - 8 - q, cy - 8 - qt, cx + 8 + q, cy - 2, fill=hair[1])
+    s.ellipse(cx - 7 - q, cy - 7 - qt, cx + 7 + q, cy - 3, fill=light, only="opaque")
+    s.polygon(
+        [(cx - 6, cy - 6 - qt), (cx + 1, cy - 9 - qt), (cx + 9 + q, cy - 5 - qt), (cx + 5, cy - 3 - qt)],
+        fill=mid,
+    )
+    s.line(cx - 2, cy - 8 - qt, cx + 6 + q, cy - 6 - qt, hi)
+    s.px(cx + 8 + q, cy - 4 - qt, light, only="opaque")
+    s.px(cx - 5, cy - 5 - qt, dark)
 
 
 def _draw_hair_style_puffy(s: Sprite, cx: int, cy: int, hair: ColorSeq, *, q: int, qt: int) -> None:
@@ -365,11 +456,25 @@ def draw_jrpg_eye(
     cute: bool = True,
     draw_brow: bool = True,
 ) -> None:
-    """Eye only — ``vertical`` or ``hero`` (see :class:`JrpgHeadLook`)."""
-    _ = iris, iris_shadow, draw_brow
+    """Eye only — ``vertical``, ``hero``, or ``expressive`` (see :class:`JrpgHeadLook`)."""
+    shadow = iris_shadow if iris_shadow is not None else pupil
+    lash_c = brow
     eye = _normalize_eye_style(style)
     if eye == "hero":
         _draw_hero_eye_minimal(s, cx, cy, pupil=pupil, brow=brow, cute=cute)
+    elif eye == "expressive":
+        _draw_expressive_eye(
+            s,
+            cx,
+            cy,
+            pupil=pupil,
+            iris=iris,
+            iris_shadow=shadow,
+            sclera=sclera,
+            paper=paper,
+            lash=lash_c,
+            cute=cute,
+        )
     else:
         _draw_vertical_eye(s, cx, cy, pupil=pupil, hi=paper, sclera=sclera, cute=cute)
 
@@ -395,7 +500,7 @@ def draw_jrpg_profile_head(
     cfg = look or JrpgHeadLook()
     dark_hair, _, _, _ = _hair_tones(hair)
     brow = lash if lash is not None else dark_hair
-    _ = iris, iris_shadow
+    shadow = iris_shadow if iris_shadow is not None else pupil
     eye_style = _normalize_eye_style(cfg.eye_style)
     q = 2 if cute else 0
     qt = 1 if cute else 0
@@ -405,6 +510,8 @@ def draw_jrpg_profile_head(
         _draw_hair_back_short(s, cx, cy, hair, q=q, qb=qb)
     elif cfg.hair_style == "puffy":
         _draw_hair_back_puffy(s, cx, cy, hair, q=q, qt=qt, qb=qb)
+    elif cfg.hair_style == "flowing":
+        _draw_hair_back_flowing(s, cx, cy, hair, q=q, qt=qt, qb=qb)
     else:
         _draw_hair_back(s, cx, cy, hair, q=q, qt=qt, qb=qb)
     if cfg.beard:
@@ -419,6 +526,9 @@ def draw_jrpg_profile_head(
     elif cfg.hair_style == "puffy":
         _draw_hair_crown_base(s, cx, cy, hair, q=q, qt=qt)
         _draw_hair_style_puffy(s, cx, cy, hair, q=q, qt=qt)
+    elif cfg.hair_style == "flowing":
+        _draw_hair_crown_base(s, cx, cy, hair, q=q, qt=qt)
+        _draw_hair_style_flowing(s, cx, cy, hair, q=q, qt=qt)
     else:
         _draw_hair_crown_base(s, cx, cy, hair, q=q, qt=qt)
         if cfg.hair_style == "quiff":
@@ -439,6 +549,19 @@ def draw_jrpg_profile_head(
     eye_anchor: tuple[int, int, int] | None = None
     if eye_style == "hero":
         _draw_hero_eye_minimal(s, cx, cy, pupil=pupil, brow=brow, cute=cute)
+    elif eye_style == "expressive":
+        _draw_expressive_eye(
+            s,
+            cx,
+            cy,
+            pupil=pupil,
+            iris=iris,
+            iris_shadow=shadow,
+            sclera=sclera,
+            paper=paper,
+            lash=brow,
+            cute=cute,
+        )
     else:
         eye_anchor = _draw_vertical_eye(s, cx, cy, pupil=pupil, hi=paper, sclera=sclera, cute=cute)
         if cfg.fringe_over_eye and eye_anchor is not None:
