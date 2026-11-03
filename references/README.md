@@ -7,6 +7,8 @@ Use [`validations.md`](validations.md) as the pre-ship gate.
 |-----|----------------|
 | [patterns.md](patterns.md) | Canvas sizes, build order, tile kits, atlas layout |
 | [humanoid-hero.md](humanoid-hero.md) | Side RPG heroes, warriors, adventurers |
+| [face-read.md](face-read.md) | **Hair + eye** checklist |
+| [jrpg-profile-face.md](jrpg-profile-face.md) | **`JrpgHeadLook`** hair/eye tuning |
 | [character-api.md](character-api.md) | **`character` / `rig` / `quality` helpers** — mandatory for heroes |
 | [platform-hero.md](platform-hero.md) | Platformer player (jump, dash, attack) |
 | [platformer-character.md](platformer-character.md) | Reference GIF/image → analysis → PROMPT.md → build.py |

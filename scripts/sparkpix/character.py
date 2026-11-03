@@ -10,6 +10,7 @@ from PIL import Image
 from sparkpix.canvas import Sprite
 from sparkpix.color import RGBA, ColorLike
 from sparkpix import draw_ops
+from sparkpix.jrpg_face import JrpgHeadLook, draw_jrpg_eye, draw_jrpg_profile_head
 
 ColorSeq = Sequence[ColorLike]
 
@@ -52,18 +53,20 @@ def platformer_leg(
     thigh_radius: int | None = None,
     shin_radius: int | None = None,
 ) -> None:
-    """Filled thigh/shin + boot block (platformer baseline)."""
+    """Filled thigh/shin + boot block (platformer baseline, ramp-shaded)."""
     tr = thigh_radius if thigh_radius is not None else (2 if back else 3)
     sr = shin_radius if shin_radius is not None else tr
-    col_u = shorts[0] if back else shorts[2]
-    col_l = shorts[1]
-    limb(s, hip, knee, tr, col_u)
-    limb(s, knee, foot, sr, col_l)
+    from sparkpix import render as rd
+
+    rd.limb_shaded(s, hip, knee, tr, shorts)
+    rd.limb_shaded(s, knee, foot, sr, shorts)
     fx, fy = foot
     s.rect(fx - 4, fy - 2, fx + 5, fy, fill=boot[0] if back else boot[1])
     s.rect(fx - 3, fy, fx + 6, fy + 1, fill=boot_dark[1])
     if not back:
         s.px(fx + 5, fy - 1, boot[2] if len(boot) > 2 else boot[1])
+        s.px(fx + 4, fy - 2, boot[-1], only="opaque")
+        s.px(fx - 3, fy - 1, boot[0], only="opaque")
 
 
 def torso_hoodie(
@@ -75,21 +78,34 @@ def torso_hoodie(
     shirt: ColorSeq,
     shorts: ColorSeq,
     width_half: int = 6,
+    cute: bool = False,
 ) -> None:
-    """Hoodie + shirt panel + shorts waist (side view +X)."""
+    """Hoodie + shirt panel + shorts waist (side view +X, upper-left light)."""
     hx, hy = hip
     sq = max(0.82, min(1.0, squash))
     extra = int((1.0 - sq) * 4)
-    x0, x1 = hx - width_half, hx + width_half
-    y0, y1 = hy - 13 + extra, hy + 2
-    s.rect(x0, y0, x1, y1, fill=hood[1])
+    torso_h = 8 if cute else 13
+    wh = width_half + (1 if cute else 0)
+    x0, x1 = hx - wh, hx + wh
+    y0, y1 = hy - torso_h + extra, hy + 2
+    s.rect(x0, y0, x1, y1, fill=hood[0])
+    s.rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill=hood[1])
     s.rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill=hood[2], only="opaque")
     s.rect(x0 + 1, y0 + 2, x1 - 2, y0 + 8, fill=shirt[1], only="opaque")
+    s.rect(x0 + 2, y0 + 2, x0 + 5, y0 + 5, fill=shirt[-1], only="opaque")
     s.rect(x1 - 2, y0 + 3, x1, y1 - 3, fill=hood[0], only="opaque")
     s.rect(x0 - 2, y0 + 6, x0, y0 + 12, fill=hood[0])
+    s.px(x0 + 1, y0 + 1, hood[-1])
+    s.px(x0 + 2, y0 + 1, hood[-1], only="opaque")
     sy = hy - 1
-    s.rect(x0, sy, x1, sy + 4, fill=shorts[2])
+    s.rect(x0, sy, x1, sy + 4, fill=shorts[0])
     s.rect(x0 + 1, sy + 1, x1 - 1, sy + 5, fill=shorts[1], only="opaque")
+    s.rect(x0 + 1, sy + 2, x1 - 2, sy + 3, fill=shorts[-1], only="opaque")
+    if cute:
+        # Hood collar under chin — bridges big Q head to torso
+        s.rect(hx - 5, y0 - 4, hx + 6, y0 - 1, fill=hood[1])
+        s.rect(hx - 4, y0 - 3, hx + 5, y0 - 2, fill=hood[2], only="opaque")
+        s.px(hx - 3, y0 - 3, hood[-1], only="opaque")
 
 
 def profile_head_facing_right(
@@ -102,57 +118,72 @@ def profile_head_facing_right(
     band: ColorSeq,
     eye_green: ColorLike,
     sclera: ColorLike,
-    mouth_shadow: ColorLike,
+    paper: ColorLike = "#f4f4ec",
+    pupil: ColorLike = "#282830",
+    lash: ColorLike | None = None,
+    iris_shadow: ColorLike | None = None,
+    look: JrpgHeadLook | None = None,
+    cute: bool = False,
 ) -> None:
-    """3/4 profile (+X): readable human face at 64×64 scale."""
-    # back hair
-    s.ellipse(cx - 9, cy - 3, cx + 1, cy + 11, fill=hair[0])
-    s.ellipse(cx - 8, cy - 2, cx + 2, cy + 10, fill=hair[1], only="opaque")
-    s.rect(cx - 8, cy + 6, cx - 5, cy + 11, fill=hair[1])
-    # neck
-    s.rect(cx - 2, cy + 7, cx + 1, cy + 10, fill=skin[1])
-    # face mass (+X cheek)
-    s.ellipse(cx - 5, cy - 4, cx + 7, cy + 8, fill=skin[1])
-    s.ellipse(cx - 4, cy - 3, cx + 6, cy + 7, fill=skin[2], only="opaque")
-    s.rect(cx + 3, cy, cx + 6, cy + 5, fill=skin[2], only="opaque")
-    # jaw / chin (read as human at 8×)
-    s.px(cx + 5, cy + 6, skin[1])
-    s.px(cx + 6, cy + 5, skin[2])
-    s.px(cx + 6, cy + 6, skin[0])
-    # nose bridge + mouth
-    s.px(cx + 6, cy + 1, skin[3] if len(skin) > 3 else skin[0])
-    s.px(cx + 6, cy + 2, skin[3] if len(skin) > 3 else skin[0])
-    s.px(cx + 5, cy + 2, skin[0])
-    s.px(cx + 4, cy + 5, mouth_shadow)
-    s.px(cx + 5, cy + 5, mouth_shadow)
-    s.px(cx + 3, cy + 5, mouth_shadow)
-    # bandana — forehead band only
-    s.rect(cx - 4, cy - 8, cx + 7, cy - 5, fill=band[1])
-    s.rect(cx - 3, cy - 7, cx + 6, cy - 6, fill=band[2], only="opaque")
-    s.px(cx + 2, cy - 7, band[0])
-    s.px(cx - 1, cy - 5, band[2])
-    # front hair
-    s.polygon(
-        [(cx - 2, cy - 7), (cx + 3, cy - 11), (cx + 9, cy - 5), (cx + 7, cy - 1)],
-        fill=hair[2],
+    """
+    JRPG profile head (+X): shared hair + eye drawer (no mouth).
+
+    Tune ``look`` (:class:`JrpgHeadLook`) and ramps in each hero ``PROMPT.md``.
+    """
+    draw_jrpg_profile_head(
+        s,
+        cx,
+        cy,
+        skin=skin,
+        hair=hair,
+        band=band,
+        iris=eye_green,
+        pupil=pupil,
+        paper=paper,
+        sclera=sclera,
+        iris_shadow=iris_shadow,
+        lash=lash,
+        look=look,
+        cute=cute,
     )
-    s.polygon(
-        [(cx + 3, cy - 4), (cx + 9, cy - 2), (cx + 8, cy + 4), (cx + 4, cy + 3)],
-        fill=hair[3] if len(hair) > 3 else hair[2],
+
+
+def mech_head_facing_right(
+    s: Sprite,
+    cx: int,
+    cy: int,
+    *,
+    chassis: ColorSeq,
+    accent: ColorSeq,
+    dark: ColorLike,
+    paper: ColorLike,
+    visor_glow: bool = False,
+    cute: bool = False,
+) -> None:
+    """Robot profile (+X): helmet + visor eye (no mouth vent). ``cute`` = Q-scale dome."""
+    q = 2 if cute else 0
+    qt = 1 if cute else 0
+    s.rect(cx - 5 - q // 2, cy - 4 - qt, cx + 7 + q, cy + 9 + (1 if cute else 0), fill=chassis[1])
+    s.rect(cx - 4 - q // 2, cy - 3 - qt, cx + 6 + q, cy + 8 + (1 if cute else 0), fill=chassis[2], only="opaque")
+    s.rect(cx - 3 - q // 2, cy - 2 - qt, cx + 5 + q, cy + 2, fill=chassis[3], only="opaque")
+    iris = accent[3] if visor_glow else accent[2]
+    draw_jrpg_eye(
+        s,
+        cx,
+        cy,
+        style="vertical",
+        iris=iris,
+        pupil=dark,
+        paper=paper,
+        iris_shadow=accent[0],
+        brow=chassis[0],
+        cute=cute,
     )
-    s.px(cx + 5, cy - 9, "#f4f4ec")
-    s.px(cx + 4, cy - 6, hair[2] if len(hair) > 2 else hair[1])
-    # eye block — 3×2 sclera + iris + highlight (camera-facing)
-    ex, ey = cx + 2, cy
-    s.rect(ex, ey, ex + 2, ey + 1, fill=sclera)
-    s.px(ex + 1, ey + 1, eye_green)
-    s.px(ex + 2, ey + 1, eye_green)
-    s.px(ex + 2, ey, "#f4f4ec")
-    s.px(ex + 2, ey, "#f4f4ec")
-    s.px(ex + 3, ey + 1, skin[0])
-    s.px(ex, ey - 1, hair[2] if len(hair) > 2 else hair[1])
-    # ear hint (profile +X)
-    s.px(cx - 1, cy + 2, skin[0])
+    s.line(cx + 3, cy - 4 - qt, cx + 3, cy - 8 - qt, chassis[0])
+    s.px(cx + 3, cy - 8 - qt, accent[3])
+    s.px(cx + 6 + q // 2, cy - 2 - qt, chassis[3])
+    s.px(cx - 4 - q // 2, cy + 6 + (1 if cute else 0), chassis[0])
+    s.px(cx + 1, cy + 5 + (1 if cute else 0), chassis[2], only="opaque")
 
 
 def draw_humanoid_layer_order(
@@ -212,6 +243,19 @@ def weapon_angle_trail(
                     s.px(px + 1, py, col)
 
 
+def slash_downward(
+    s: Sprite,
+    cx: int,
+    cy: int,
+    *,
+    fade: RGBA = (130, 210, 150, 95),
+    bright: RGBA = (190, 255, 210, 170),
+    span_deg: int = 55,
+) -> None:
+    """Downward strike crescent (tip travel top → bottom, character facing +X)."""
+    slash_crescent(s, cx, cy, center_deg=92.0, span_deg=span_deg, radius_inner=8, radius_outer=24, fade=fade, bright=bright)
+
+
 def slash_crescent(
     s: Sprite,
     cx: int,
@@ -223,13 +267,15 @@ def slash_crescent(
     fade: RGBA = (130, 210, 150, 95),
     bright: RGBA = (190, 255, 210, 170),
 ) -> None:
-    for deg in range(int(center_deg - span_deg // 2), int(center_deg + span_deg // 2), 3):
+    core = bright
+    for deg in range(int(center_deg - span_deg // 2), int(center_deg + span_deg // 2), 2):
         rad = math.radians(deg)
         for dist in range(radius_inner, radius_outer, 2):
             px = int(cx + math.cos(rad) * dist)
             py = int(cy + math.sin(rad) * dist)
-            col = bright if dist > radius_inner + 8 else fade
+            col = core if dist > radius_inner + 12 else (bright if dist > radius_inner + 6 else fade)
             s.px(px, py, col)
+            s.px(px + 1, py, col)
             s.px(px, py + 1, col)
 
 
@@ -258,6 +304,13 @@ def stamp_silhouette_ghost(
 def finish_outside_outline(s: Sprite, ink: ColorLike) -> None:
     """Selective hull outline — call after full character on current layer."""
     s.outline(ink, where="outside")
+
+
+def finish_production_humanoid(s: Sprite, ink: ColorLike, *, trim_specks: bool = True) -> None:
+    """Outline + speck cleanup — preferred end pass for shipped humanoids."""
+    from sparkpix import render as rd
+
+    rd.finish_production_pass(s, ink, trim_specks=trim_specks)
 
 
 def thin_leg_column_count(

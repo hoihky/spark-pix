@@ -84,6 +84,8 @@ def build_quality_meta(
     critique_frames: Sequence[int],
     humanoid: bool = True,
     min_outline_coverage: float = 0.45,
+    max_colors: int = 36,
+    min_height_fill: float = 0.82,
 ) -> dict:
     return {
         "outlineInk": outline_ink,
@@ -91,6 +93,8 @@ def build_quality_meta(
         "critiqueFrames": list(critique_frames),
         "humanoid": humanoid,
         "minOutlineCoverage": min_outline_coverage,
+        "maxColors": max_colors,
+        "minHeightFill": min_height_fill,
     }
 
 
@@ -276,12 +280,15 @@ def critique_atlas_dir(
     outline_ink: Optional[str] = None
     min_outline = 0.45
     humanoid = True
+    min_height_fill = 0.82
     sidecar = load_quality_sidecar(path)
     if sidecar:
         foot_y = int(sidecar.get("footY", foot_y))
         outline_ink = sidecar.get("outlineInk")
         min_outline = float(sidecar.get("minOutlineCoverage", min_outline))
         humanoid = bool(sidecar.get("humanoid", True))
+        max_colors = int(sidecar.get("maxColors", max_colors))
+        min_height_fill = float(sidecar.get("minHeightFill", min_height_fill))
         if not sample_frames or sample_frames == (0,):
             cf = sidecar.get("critiqueFrames")
             if cf:
@@ -297,6 +304,7 @@ def critique_atlas_dir(
             outline_ink=outline_ink,
             min_outline_coverage=min_outline,
             check_humanoid=humanoid,
+            min_height_fill=min_height_fill,
         )
         for issue in sub.issues:
             tagged = QualityIssue(

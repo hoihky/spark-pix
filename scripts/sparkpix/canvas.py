@@ -143,6 +143,28 @@ class Sprite:
     def get(self, x: int, y: int) -> RGBA:
         return draw_ops.get_px(self._img(), x, y)
 
+    def trim_isolated_specks(self, min_neighbors: int = 1) -> int:
+        """Remove opaque pixels with at most min_neighbors opaque 4-neighbors. Returns count removed."""
+        img = self._img()
+        w, h = img.size
+        to_clear: list[tuple[int, int]] = []
+        for y in range(h):
+            for x in range(w):
+                if img.getpixel((x, y))[3] == 0:
+                    continue
+                n = sum(
+                    1
+                    for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))
+                    if 0 <= x + dx < w
+                    and 0 <= y + dy < h
+                    and img.getpixel((x + dx, y + dy))[3] > 0
+                )
+                if n <= min_neighbors:
+                    to_clear.append((x, y))
+        for x, y in to_clear:
+            img.putpixel((x, y), (0, 0, 0, 0))
+        return len(to_clear)
+
     def line(self, x0: int, y0: int, x1: int, y1: int, color: ColorLike, only: Optional[ColorLike] = None) -> None:
         c = self._color(color)
         if c is None:

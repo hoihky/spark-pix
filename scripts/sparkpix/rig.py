@@ -36,7 +36,13 @@ def tip(px: int, py: int, deg: float, length: float) -> Tuple[int, int]:
 
 
 def weapon_raised_behind_head(weapon_deg: float, threshold: float = 78.0) -> bool:
-    """True when a vertical / overhead weapon should draw behind the head (windup)."""
+    """
+    True when weapon should draw behind the head (overhead windup).
+
+    Angles use screen math: 0°=+X, 90°=+Y down, **negative°=tip above grip**.
+    """
+    if weapon_deg < -38:
+        return True
     return weapon_deg > threshold
 
 

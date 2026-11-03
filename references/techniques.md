@@ -5,7 +5,9 @@ readable at 1× without blur or fractional pixels. Pair with [palettes.md](palet
 
 ## Ramps
 
-`ramp("#base", steps=5)` returns darkest → lightest. Shade with stacked shapes:
+`ramp("#base", steps=5)` returns darkest → lightest. For limbs and arms prefer **`render.limb_shaded(s, p0, p1, radius, ramp)`** (dark underpaint, mid fill, upper-left highlights).
+
+Shade torso/clothing with stacked shapes:
 
 ```python
 s.ellipse(x0, y0+1, x1, y1+1, fill=BODY[0])      # shadow mass

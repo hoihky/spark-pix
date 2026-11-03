@@ -40,7 +40,8 @@ After all body parts are drawn on the frame, call **`character.finish_outside_ou
 - Earthy limited palette (12–24 colors); selective outline (darker **same-hue**, not black rim everywhere).
 - Light from **upper left**; highlight on hair top and weapon edge.
 - Greatsword: blade **2 px** wide, tip highlight, gold guard, small blue gem OK.
-- One visible eye (3/4 face); green/teal accent is fine.
+- One visible eye (**3×2 px** block, sclera + iris + pupil + glint); see **[face-read.md](face-read.md)**.
+- Mouth: **3 px** dark mouth line, not a single ambiguous skin pixel.
 
 ## Animation
 

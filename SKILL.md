@@ -90,7 +90,7 @@ Ship art that could appear in a commercial indie title, not a tech demo.
 | Criterion | Requirement |
 |-----------|-------------|
 | Silhouette | Readable at 1×; squint test passes on 8× preview |
-| Construction | [patterns.md](references/patterns.md) order: silhouette → shade → highlight → outline → accent |
+| Construction | [patterns.md](references/patterns.md): silhouette → **`render.limb_shaded`** / ramp stacks → **`finish_production_humanoid`** |
 | Palette | Intentional 8–24 colors; one light direction (default **upper-left**) |
 | Animation | Integer pixel coords; feet/contact stable; clips named for code (`idle`, `walk`, `attack`) |
 | Atlases | Uniform grid; frame 0 = bottom-left; `validate` + manifest clip ranges correct |
@@ -107,10 +107,11 @@ Before animating clips, lock this pipeline in `build.py`:
 
 1. **`@dataclass` rig** — feet, knees, hip, shoulder, elbow, hand, head; weapon angle + VFX flags.  
 2. **`rig.apply_shift(dy, lean, …)`** — finalize breath/jump/lean on all joints (integer coords).  
-3. **Layer order** — back leg → back arm → weapon (if windup) → torso → front leg → head → arm → weapon → VFX → **`ch.finish_outside_outline(ink)`**.  
+3. **Layer order** — back leg → back arm → weapon (if windup) → torso → front leg → head → arm → weapon → VFX → **`ch.finish_production_humanoid(ink)`** (outline + speck trim).  
 4. **Windup z-order** — `rig.weapon_raised_behind_head(deg)` so baton/blade does not cover the face.  
 5. **Previews** — `preview(..., scale=8, matte="#343848")` so hull ink is visible; **not** shipped to game.  
 6. **Ghosts** — `stamp_silhouette_ghost` with `with_outline=False` on the temp draw.  
+7. **Face read** — [face-read.md](references/face-read.md) + [jrpg-profile-face.md](references/jrpg-profile-face.md): **hair + eye** (no mouth); preview at 8× before animating clips.
 
 Do **not** copy the tiny slime scale or 1 px stick legs for people.
 
@@ -119,6 +120,8 @@ Do **not** copy the tiny slime scale or 1 px stick legs for people.
 | Symptom | Likely cause | Fix |
 |---------|----------------|-----|
 | Muddy silhouette | No outside outline | `ch.finish_outside_outline(ink)` after body |
+| Attack swings upward | Baton angles all **positive** (tip below hand only) | Windup **deg &lt; -38**; strike sweeps **-105° → +62°** (top→down) |
+| Hair / eye muddy | Bangs cover sclera | [face-read.md](references/face-read.md) + `profile_head_facing_right(..., iris_shadow=EYE_DEEP, lash=hair[0], cute=True)` |
 | Face covered on windup | Weapon always on top | `weapon_raised_behind_head` + split draw |
 | “Stick” legs | `line()` or radius 1 | `ch.limb` / `platformer_leg` with radius ≥ 3 front shin |
 | Invisible outline in previews | Transparent PNG on black | `preview(..., matte=...)` |
@@ -199,10 +202,11 @@ Import: `sys.path.insert(0, str(ROOT / "scripts"))` then
 
 | Area | Methods |
 |------|---------|
-| Canvas | `Sprite(w,h,palette=)` · `layer(name)` · `frame(i)` · `use(frame=, layer=)` |
+| Canvas | `Sprite(w,h,palette=)` · **`trim_isolated_specks`** · `layer(name)` · `frame(i)` · `use(frame=, layer=)` |
 | Draw | `px` `line` `rect` `circle` `ellipse` `polygon` `fill` `clear` `get` `paste_png` · **`capsule(x0,y0,x1,y1,r,color)`** |
 | Pixel ops | **`outline(where="outside")`** · `mirror_x/y` · `replace` · `dither` |
-| Character helpers (`character`) | **`limb`** · **`platformer_leg`** · **`torso_hoodie`** · **`profile_head_facing_right`** · **`drop_shadow_oval`** · **`weapon_angle_trail`** · **`slash_crescent`** · **`hilt_spark`** · **`stamp_silhouette_ghost`** · **`finish_outside_outline(ink)`** · **`draw_humanoid_layer_order`** · **`warn_if_stick_legs`** |
+| Character helpers (`character`) | **`limb`** · **`platformer_leg`** · **`torso_hoodie`** · **`profile_head_facing_right`** · **`finish_production_humanoid`** · **`finish_outside_outline`** · VFX helpers · **`warn_if_stick_legs`** |
+| Render (`render`) | **`limb_shaded`** · **`finish_production_pass`** · **`matte_composite`** |
 | Rig helpers (`rig`) | **`Pt`** · **`apply_shift`** · **`shift_tuple`** · **`lerp_int`** / **`lerp_float`** · **`tip`** · **`weapon_raised_behind_head`** |
 | Quality (`quality`) | **`analyze_frame`** · **`critique_atlas_dir`** · **`build_quality_meta`** · **`write_quality_sidecar`** — CLI: **`sparkpix critique <out>`** |
 | Animation | `add_frame(copy=)` · `set_duration(ms)` · `tag_clip(name, from, to, fps, loop)` |
@@ -224,7 +228,7 @@ Index: [references/README.md](references/README.md)
 | **Reference PNG/GIF → prompt → art** | **[platformer-character.md](references/platformer-character.md)** |
 | Canvas sizes, build order, tiles | [patterns.md](references/patterns.md) |
 | Platformer player clips | [platform-hero.md](references/platform-hero.md) |
-| **Humanoid proportions / face** | **[humanoid-hero.md](references/humanoid-hero.md)** |
+| **Humanoid proportions / face** | **[humanoid-hero.md](references/humanoid-hero.md)** + **[face-read.md](references/face-read.md)** |
 | **Character Python API (mandatory for heroes)** | **[character-api.md](references/character-api.md)** |
 | Shading, outlines | [techniques.md](references/techniques.md) |
 | Frame counts, puppeting | [animation.md](references/animation.md) |
@@ -237,9 +241,8 @@ Index: [references/README.md](references/README.md)
 
 | Project | What to copy |
 |---------|----------------|
-| `pixel-art/platform_hero/` | Reference-driven platformer; PROMPT pattern; **`character`/`rig`/`critique`** pipeline |
-| `pixel-art/vanguard_hero/` | 64×64 RPG rig, multi-clip atlas |
-| `pixel-art/robot_ranger/` | Shoot + projectiles |
+| `pixel-art/ref_youth/` | Reference screenshot: spiky cyan hair, 2×3 eye, olive tunic |
+| `pixel-art/ref_elder/` | Reference screenshot: puffy hair, beard, hero eye, gold cape |
 | `pixel-art/example_tiles/` | TSX + gameplay props |
 | `pixel-art/example_slime/` | API sample only |
 
