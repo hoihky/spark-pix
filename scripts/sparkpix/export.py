@@ -55,7 +55,8 @@ class SpritesheetMeta:
             "clips": [c.to_spark_dict() for c in self.clips],
             "notes": (
                 "Matches Spark::SpriteAnimatorComponent uniform grid: frame 0 is bottom-left, "
-                "+X then +Y. Use SetUniformGrid(columns, rows) and SpriteAnimationClip fields."
+                "+X then +Y. Atlas PNG cells are flipped vertically at export so +Y-up sprites "
+                "match engine UV sampling (see compose_spritesheet in export.py)."
             ),
         }
 
@@ -65,6 +66,14 @@ def scale_nearest(img: Image.Image, scale: int) -> Image.Image:
         return img.copy()
     w, h = img.size
     return img.resize((w * scale, h * scale), Image.Resampling.NEAREST)
+
+
+def flip_frame_for_spark_upload(frame: Image.Image) -> Image.Image:
+    """
+    Spark samples sprite quads with low V at the quad bottom (world +Y up) while PNG
+    rows are top-down in the scene texture array. Flip each atlas cell so feet read upright.
+    """
+    return frame.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
 
 
 def compose_spritesheet(
@@ -88,7 +97,7 @@ def compose_spritesheet(
         row = i // columns
         x = col * (fw + padding)
         y = row * (fh + padding)
-        sheet.paste(frame, (x, y))
+        sheet.paste(flip_frame_for_spark_upload(frame), (x, y))
     meta = SpritesheetMeta(
         columns=columns,
         rows=rows,

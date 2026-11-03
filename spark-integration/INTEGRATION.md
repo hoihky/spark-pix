@@ -17,10 +17,24 @@ C++ sources live in the Spark repo (not duplicated here):
 After building art in spark-pix:
 
 ```bash
-PYTHONPATH=scripts python3 pixel-art/example_slime/build.py
-python -m sparkpix validate pixel-art/example_slime/out
+PYTHONPATH=scripts python3 pixel-art/ref_youth/build.py
+PYTHONPATH=scripts python3 pixel-art/ref_elder/build.py
+PYTHONPATH=scripts python3 pixel-art/rose_hero/build.py
+python -m sparkpix validate pixel-art/ref_youth/out pixel-art/ref_elder/out pixel-art/rose_hero/out
 
 # Spark as sibling checkout "spark"
+DEST=../spark/assets/sprites/spark_pix
+for pack in ref_youth ref_elder rose_hero; do
+  cp pixel-art/$pack/out/$pack.png pixel-art/$pack/out/$pack.spark-atlas.json "$DEST/"
+done
+```
+
+Demo **30 — Spark-pix atlas** loads `ref_youth`, `ref_elder`, and `rose_hero` from `/sprites/spark_pix/` (three heroes in a row).
+
+Optional slime sample:
+
+```bash
+PYTHONPATH=scripts python3 pixel-art/example_slime/build.py
 cp pixel-art/example_slime/out/slime.png pixel-art/example_slime/out/slime.spark-atlas.json \
    ../spark/assets/sprites/spark_pix/
 ```

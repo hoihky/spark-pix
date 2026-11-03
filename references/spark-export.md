@@ -13,6 +13,8 @@ Target engine: **Spark** (open-source game engine). Asset root: `assets/sprites/
 - Frames increase along **+X**, then **+Y** (row-major).
 - `ComputeUniformGridUv(columns, rows, linearFrame, atlasWidth, atlasHeight)` sets `SpriteComponent` UV.
 
+**Atlas PNG orientation:** `save_spark_atlas` / `compose_spritesheet` **flip each frame vertically** before packing. Author art feet-down in `build.py` as usual; previews/GIFs stay unflipped. Do not hand-flip shipped `*.png` atlases.
+
 ### Files to ship (production pack)
 
 | File | Purpose |
