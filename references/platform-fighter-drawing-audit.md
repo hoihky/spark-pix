@@ -26,13 +26,15 @@ Improve incrementally by (1) one coordinate system, (2) canonical draw API in sc
 
 Reference art is hand-placed pixels; only hair matches the design sheet exactly. Everything else is a stylized primitive stack, so small rig errors become visible “glitches” (gray shirt on cheek, pink scarf through profile, floating glove).
 
-### 2. Two head coordinate systems
+### 2. Two head coordinate systems (B2 — explicit)
 
-- Skeleton joint: `P128.head` ≈ **(62, 41)** — `platform_style.py` (Q64 head + `ANCHOR_X/Y` + `HEAD_Y_ADJ`).
-- Design facial landmark (hair extract anchor): **(62, 54)** — `extract_ref_male_hero_hair.py`, eye row ~55 on design sheet.
-- Bridge constant: **`REF_DESIGN_FACE_Y_ADJ = 13`** in `platform_ref_hair.py` — hair stamps and face blocks share `cy + 13`.
+- **Head joint:** `P128.head` ≈ **(62, 41)** — rig/neck/scarf (`platform_style.py`, Q64 + anchor + `HEAD_Y_ADJ`).
+- **Facial stamp anchor:** `P128.face` / `face_anchor_at_rest()` ≈ **(62, 54)** — hair/face JSON stamps (`ref_male_hero_landmarks.json`, `calibrate_p128_from_design.py`).
+- **Vertical bridge:** `FACE_REL_DY` = `face_y_adj` in landmarks (**13** at rest) — `face_y_from_head_joint`, `face_anchor_from_head`, `Rig.face` after `finalize()`.
 
-Measured (design vs current skeleton): foot row **79** matches `FOOT_Y`; eye **~55** vs `head[1]+13` → **~54** (≈1px). **Shoulder (64, 56)** vs shirt mass centroid **~y 65** — gi art sits lower than the shoulder joint, forcing arm offsets in `build.py`.
+`REF_DESIGN_FACE_Y_ADJ` in `platform_ref_hair.py` / `platform_ref_face.py` is a **deprecated alias** of `FACE_REL_DY` (do not add new `+13` literals). Draw helpers still take skeleton `head` Y and map to the facial row for `ref_design` hair (`platform_face._head_cy`).
+
+Measured (design vs current skeleton): foot row **79** matches `FOOT_Y`; eye centroid **~55** vs facial anchor **54** (≈1px). **Shoulder (64, 56)** vs shirt mass centroid **~y 65** — gi art sits lower than the shoulder joint, forcing arm offsets in `build.py`.
 
 Face patches in `ref_design` (`platform_face._draw_face_base`) add opaque `rect`s for cheeks/chin so skin wins over shirt/scarf after z-order fights — readable but blocky.
 
@@ -102,24 +104,24 @@ Check **`out/preview_idle.png`** (8×) and **`out/parity_ref_vs_gen.png`**.
 
 ### Phase A — Stabilize API (scripts only, minimal visual change)
 
-- [ ] **A1** Add `platform_fighter.py` (or extend `platform_outfit`) with `draw_platform_fighter_frame(s, r, palette, knobs)` implementing the canonical layer order from `platform-fighter.md`.
-- [ ] **A2** Move `_back_arm_pts` / `_front_arm_pts` into `hero_config.PlatformArmOffsets` or `platform_body` constants derived from `P128`, documented in one place.
-- [ ] **A3** Thin `male_hero/build.py` to rigs + palette + call shared draw; no duplicate `draw_frame_content` paths.
-- [ ] **A4** Extend `parity_male_hero.py` (or new `parity_male_hero_regions.py`) with ROI checks: eye hex, back-glove bbox, face skin count (design vs gen).
+- [x] **A1** `scripts/sparkpix/platform_fighter.py` — `draw_platform_fighter_frame` + canonical layer order.
+- [x] **A2** `PlatformArmOffsets` / `back_arm_chain` / `front_arm_chain` in `platform_fighter.py`.
+- [x] **A3** `male_hero/build.py` calls shared draw (`FIGHTER_DRAW` config); local draw helpers removed.
+- [x] **A4** Regional idle gates — `platform_parity.py` + `parity_male_hero.py` (`regions_ok`).
 
 **Done when:** One draw function; build.py &lt; ~400 lines; parity fails if eye or back-hand bbox drifts.
 
 ### Phase B — Skeleton and face anchor (reduce magic numbers)
 
-- [ ] **B1** Script `scripts/calibrate_p128_from_design.py` → JSON landmarks (foot, eye, shoulder, back hand, neck) from design sheet.
-- [ ] **B2** Set `P128.head` to joint row *or* rename `head` vs `face_anchor` so `REF_DESIGN_FACE_Y_ADJ` can shrink toward 0.
-- [ ] **B3** Replace ad-hoc face `rect`s in `ref_design` with either tuned compact mask **or** start face stamp table (see Phase C).
+- [x] **B1** Script `scripts/calibrate_p128_from_design.py` → `ref_male_hero_landmarks.json`.
+- [x] **B2** `P128.head` (joint) vs `P128.face` / `face_anchor` (stamp row); `FACE_REL_DY` from `ref_male_hero_landmarks.json`; `Rig.face` in `finalize()`.
+- [x] **B3** Traced face stamps — `extract_ref_male_hero_face.py` + `platform_ref_face.draw_ref_male_hero_face`.
 
-**Done when:** `REF_DESIGN_FACE_Y_ADJ` ≤ 1 or documented as deprecated; shoulder Y within ~2px of shirt attach on idle.
+**B2 note:** `face_y_adj` stays **13** at idle because the joint row and stamp row differ on the design sheet — the win is naming + calibration, not forcing dy→0. **`REF_DESIGN_FACE_Y_ADJ`** deprecated. Shoulder vs shirt attach still open (~9px).
 
 ### Phase C — Stamp layers (reference fidelity, palette-swappable)
 
-- [ ] **C1** `extract_ref_male_hero_face.py` + `draw_ref_male_hero_face` (skin ramps only).
+- [x] **C1** `extract_ref_male_hero_face.py` + `draw_ref_male_hero_face` (skin + eye stamps).
 - [ ] **C2** Optional torso/scarf stamps for idle frame 0 first, then keyed frames for scarf.
 - [ ] **C3** Keep procedural legs/arms for animation until rig stamps exist per clip.
 
@@ -127,16 +129,16 @@ Check **`out/preview_idle.png`** (8×) and **`out/parity_ref_vs_gen.png`**.
 
 ### Phase D — Procedural polish (if staying procedural)
 
-- [ ] **D1** Use `limb_shaded` in `draw_arm_gi` (match legs).
-- [ ] **D2** Tune `draw_torso_gi` shoulder trim to align mass with `P128.shoulder` + 2..4px.
-- [ ] **D3** Scarf: bilinear sample / stamp from ref strip cells using existing `scarf_keys.json` frame index.
-- [ ] **D4** Walk/run: pin `foot_f[1]` / `foot_b[1]` to `FOOT_Y` on contact frames (fix `foot_drift`).
+- [x] **D1** `draw_arm_gi` uses `limb_shaded` (+ `min_radius=1` on compact back arm).
+- [x] **D2** `draw_torso_gi` compact `gi_top = shoulder + 4` + collar on gi top (shirt mass below joint).
+- [x] **D3** Scarf stamps — `extract_ref_male_hero_scarf.py`, `platform_ref_scarf.py`, `Rig.scarf_stamp_clip/frame` (idle/walk/run; jump+ procedural).
+- [x] **D4** Walk/run feet on `FOOT_Y`; scarf/boot/shadow capped at `FOOT_Y`; art clip + atlas `foot_drift` uses Spark contact row (min Y).
 
 **Done when:** critique has no `foot_drift`; walk strip contact row stable.
 
 ### Phase E — Finish and palette
 
-- [ ] **E1** Split `OUTLINE_BUCKETS` so skin, hair, shirt, scarf do not share inks incorrectly.
+- [x] **E1** Split `OUTLINE_BUCKETS` — hair / skin / scarf / blush separate inks (`male_hero/build.py`).
 - [ ] **E2** Optional: skip selective outline on head ROI when using full stamps.
 
 ---

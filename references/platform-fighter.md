@@ -41,9 +41,8 @@ Add `combo_2` / `combo_3` when reference strips are provided.
 
 1. Dash ghost — `ch.stamp_silhouette_ghost` (**no** outline inside `draw_fn`).
 2. Ground shadow — `ch.drop_shadow_oval`.
-3. Back leg, back scarf, **back arm upper** (shirt sleeve behind gi).
-4. Gi torso + chest bridge, front leg, **back arm lower** (forearm + glove).
-5. Neck bridge, head `hair_back`, front scarf knot, front arm.
+3. Back leg, **back arm upper**, gi torso, front leg, **back arm lower**, neck, `hair_back`.
+4. Front scarf knot, front arm, **back scarf tail**, `face_front`.
 6. Head `face_front` (skin + traced bangs + eye **on top** of arm/scarf).
 7. Slash / spark (`platform_vfx`).
 8. **`ch.finish_selective_humanoid(OUTLINE_BUCKETS)`**.
@@ -69,13 +68,25 @@ Compare `preview_idle.png` (8×) to reference idle strip. **`frame0_art.png`** i
 python3 scripts/parity_male_hero.py
 ```
 
-Target: `foot_delta_y` ≤ 3, `overlap_hex` ≥ 8 vs design study.
+Target: `foot_delta_y` ≤ 3, `overlap_hex` ≥ 8 vs design study, plus **regional** idle checks
+(`regions_ok` in `out/parity_report.json`):
+
+| Region | What |
+|--------|------|
+| `iris_pixels` | Green iris count matches design |
+| `face_skin_roi` | Skin-tone pixels in face bbox |
+| `back_glove_pixels` | Glove ramp in back-hand ROI ``x52–67, y64–77`` (excludes front-fist column) |
+| `back_glove_bbox` | Same-ROI glove bbox within 4px of ref |
+
+Shared draw: ``sparkpix.platform_fighter.draw_platform_fighter_frame`` (arm offsets:
+``PlatformArmOffsets`` / ``DEFAULT_PLATFORM_ARM_OFFSETS``).
 
 ### Scarf keys (idle / walk / run)
 
 ```bash
 python3 scripts/scarf_keys_from_strips.py
-python3 scripts/scarf_tip_parity.py   # after build — tip X vs ref, target max err ≤ 2px
+python3 scripts/extract_ref_male_hero_scarf.py   # idle/walk/run stamp JSON
+python3 scripts/scarf_tip_parity.py   # after build — tip X vs ref, max err ≤ 2px all clips
 ```
 
 Writes `pixel-art/male_hero/scarf_keys.json` with per-frame **`tip_x` / `tip_dy`** for

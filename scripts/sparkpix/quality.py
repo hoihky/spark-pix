@@ -315,18 +315,19 @@ def critique_atlas_dir(
             merged.issues.append(tagged)
 
     if len(sample_frames) >= 2:
-        bottoms: List[int] = []
+        # Atlas PNG is Y-flipped on Spark export (+Y up); ground contact is min row, not max.
+        contact_rows: List[int] = []
         for idx in sample_frames:
             frame = extract_sheet_frame(sheet, fw, fh, idx, pad)
             bbox = _opaque_bbox(frame)
             if bbox:
-                bottoms.append(bbox[3])
-        if bottoms and max(bottoms) - min(bottoms) > 1:
+                contact_rows.append(bbox[1])
+        if contact_rows and max(contact_rows) - min(contact_rows) > 1:
             merged.issues.append(
                 QualityIssue(
                     "warn",
                     "foot_drift",
-                    f"opaque bottom row varies {min(bottoms)}..{max(bottoms)} across sampled frames "
+                    f"ground contact row varies {min(contact_rows)}..{max(contact_rows)} across sampled frames "
                     "— stabilize walk/run contact (animation.md)",
                 )
             )

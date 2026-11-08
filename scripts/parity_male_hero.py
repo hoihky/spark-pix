@@ -11,6 +11,9 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from sparkpix.platform_parity import run_male_hero_idle_regions  # noqa: E402
 
 
 def _bbox(img: Image.Image, *, skip_black: bool = True) -> tuple | None:
@@ -58,6 +61,10 @@ def main() -> int:
     report["overlap_hex"] = len(ref_colors & gen_colors)
     report["missing_from_gen"] = sorted(ref_colors - gen_colors)[:12]
 
+    region_report = run_male_hero_idle_regions(ref_i, gen_i)
+    report["regions"] = region_report["regions"]
+    report["regions_ok"] = region_report["regions_ok"]
+
     sidecar = out / "parity_report.json"
     sidecar.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, indent=2))
@@ -68,7 +75,11 @@ def main() -> int:
     canvas.paste(gen_i, (136, 0))
     canvas.save(out / "parity_ref_vs_gen.png")
 
-    ok = rb and gb and abs(report.get("foot_delta_y", 99)) <= 3 and report["overlap_hex"] >= 8
+    coarse = rb and gb and abs(report.get("foot_delta_y", 99)) <= 3 and report["overlap_hex"] >= 8
+    ok = coarse and report["regions_ok"]
+    if not report["regions_ok"]:
+        failed = [r["name"] for r in report["regions"] if not r["ok"]]
+        print(f"region parity failed: {', '.join(failed)}", file=sys.stderr)
     return 0 if ok else 2
 
 

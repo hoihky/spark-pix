@@ -160,7 +160,27 @@ def main() -> int:
             continue
         bundle["clips"][clip] = analyze_strip(path, frames=frames)
 
+    if "idle" in bundle["clips"]:
+        idle_keys = bundle["clips"]["idle"]["keys"]
+        for clip, (frames, _) in CLIP_TABLE.items():
+            if clip in bundle["clips"]:
+                continue
+            bundle["clips"][clip] = {
+                "source": "synthetic_from_idle",
+                "frame_w": bundle["clips"]["idle"].get("frame_w", 128),
+                "frames": frames,
+                "tip_range": bundle["clips"]["idle"].get("tip_range", [0, 0]),
+                "keys": [idle_keys[i % len(idle_keys)] for i in range(frames)],
+            }
+
     out = root / "pixel-art/male_hero/scarf_keys.json"
+    if out.is_file():
+        try:
+            prev = json.loads(out.read_text(encoding="utf-8"))
+            for clip_name, data in prev.get("clips", {}).items():
+                bundle["clips"].setdefault(clip_name, data)
+        except json.JSONDecodeError:
+            pass
     out.write_text(json.dumps(bundle, indent=2) + "\n", encoding="utf-8")
     summary = {
         k: {"frames": v.get("frames"), "frame_w": v.get("frame_w"), "tip_range": v.get("tip_range")}

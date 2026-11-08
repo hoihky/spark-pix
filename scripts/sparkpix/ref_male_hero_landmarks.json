@@ -1,0 +1,28 @@
+{
+  "source": "design/source_1x.png",
+  "p128_head_joint": [
+    62,
+    41
+  ],
+  "face_anchor": [
+    62,
+    54
+  ],
+  "face_y_adj": 13,
+  "face_rel_dy_source": "face_anchor[1] - p128_head_joint[1]",
+  "eye_centroid": [
+    65.0,
+    55.0
+  ],
+  "foot_bottom_design": 79,
+  "foot_y_p128": 79,
+  "foot_delta": 0,
+  "neck": [
+    62,
+    53
+  ],
+  "shoulder": [
+    64,
+    56
+  ]
+}

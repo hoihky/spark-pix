@@ -22,9 +22,10 @@ def limb_shaded(
     ramp: ColorSeq,
     *,
     only: ColorLike = None,
+    min_radius: int = 2,
 ) -> None:
     """Filled limb: dark underpaint → mid body → upper-left highlight ticks."""
-    r = max(2, radius)
+    r = max(min_radius, radius)
     dark = ramp[0]
     mid = ramp[2] if len(ramp) > 2 else ramp[1]
     hi = ramp[-1]

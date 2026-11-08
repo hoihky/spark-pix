@@ -9,13 +9,14 @@ from typing import Sequence
 
 from sparkpix.canvas import Sprite
 from sparkpix.color import ColorLike
+from sparkpix.platform_style import FACE_REL_DY  # noqa: F401 — re-export for legacy imports
+
+REF_DESIGN_FACE_Y_ADJ = FACE_REL_DY  # deprecated: use platform_style.FACE_REL_DY / face_y_from_head_joint
 
 ColorSeq = Sequence[ColorLike]
 
-# Stamps are relative to ``P128.head`` (design-space Y).
+# Stamps are relative to the design facial row (see ``platform_ref_face``).
 REF_HAIR_ANCHOR_DY = 0
-# JRPG face blocks are anchored on the Q ``head`` joint; design eyes sit lower (~13px).
-REF_DESIGN_FACE_Y_ADJ = 13
 # Cheek bangs (dy<=9) draw in face_front — after skin — nape stays in hair_back.
 REF_HAIR_FRINGE_DY_MAX = 9
 _TEMPLATE = Path(__file__).resolve().parent / "ref_male_hero_hair.json"

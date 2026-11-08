@@ -22,12 +22,19 @@ def drop_shadow_oval(
     foot_y: int,
     color: ColorLike,
     half_w: int = 7,
+    *,
+    max_y: int | None = None,
 ) -> None:
-    cy = foot_y + 1
+    """Ground contact shadow; ``max_y`` pins silhouette bottom (platform ``FOOT_Y``)."""
+    cy = foot_y if max_y is not None else foot_y + 1
+    depth = 1 if max_y is not None else 3
     for dx in range(-half_w, half_w + 1):
-        for dy in range(0, 3):
-            if (dx * dx) / max(1, half_w * half_w) + (dy * dy) / 4.0 <= 1.0:
-                s.px(center_x + dx, cy + dy, color)
+        for dy in range(0, depth):
+            y = cy + dy
+            if max_y is not None and y > max_y:
+                continue
+            if (dx * dx) / max(1, half_w * half_w) + (dy * dy) / max(1, depth * depth) <= 1.0:
+                s.px(center_x + dx, y, color)
 
 
 def limb(

@@ -30,13 +30,14 @@ from sparkpix.hero_config import (  # noqa: E402
     PLATFORM_CLIP_TABLE,
     validate_knobs,
 )
-from sparkpix.platform_body import draw_arm_gi, draw_chest_bridge, draw_neck_bridge  # noqa: E402
-from sparkpix.platform_ref_hair import REF_DESIGN_FACE_Y_ADJ  # noqa: E402
+from sparkpix.platform_fighter import (  # noqa: E402
+    PlatformFighterDrawConfig,
+    draw_platform_fighter_frame,
+    preserve_rgb_from_colors,
+)
+from sparkpix.platform_style import FACE_REL_DY, face_anchor_from_head  # noqa: E402
 from sparkpix.platform_face import FighterHeadLook  # noqa: E402
-from sparkpix.platform_outfit import draw_platform_leg, draw_platform_torso  # noqa: E402
-from sparkpix.platform_scarf import draw_scarf_mass  # noqa: E402
 from sparkpix.platform_style import FOOT_Y, MIN_HEIGHT_FILL, P128, SCARF_TIP_NUDGE_DX  # noqa: E402
-from sparkpix.platform_vfx import draw_slash_arc, draw_spark_streak  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out"
 W, H = 128, 128
@@ -92,14 +93,36 @@ def _scarf_keys(clip: str) -> list:
     return _SCARF_BUNDLE["clips"][clip]["keys"]
 
 
+# Scarf hull: dark plum (not ``scarf[0]`` — same brown as hair → muddy selective outline).
+SCARF_OUTLINE = "#701070"
+
 OUTLINE_BUCKETS = [
-    (list(PALETTE.hair) + list(PALETTE.skin), PALETTE.hair[0]),
+    (list(PALETTE.hair), PALETTE.hair[0]),
+    (list(PALETTE.skin), PALETTE.skin[0]),
     (list(PALETTE.shirt) + [PALETTE.eye.paper, "#c0d5dc", "#a0acc5"], PALETTE.trim[2]),
     (list(PALETTE.trim) + list(PALETTE.pants), PALETTE.pants[0]),
     (list(PALETTE.boot) + list(PALETTE.glove) + list(PALETTE.belt), PALETTE.boot[0]),
-    (list(PALETTE.scarf) + [PALETTE.eye.blush], PALETTE.scarf[0]),
+    (list(PALETTE.scarf), SCARF_OUTLINE),
+    ([PALETTE.eye.blush], PALETTE.skin[0]),
     ([PALETTE.eye.pupil, PALETTE.eye.iris, PALETTE.eye.sclera], PALETTE.eye.pupil),
 ]
+
+FIGHTER_DRAW = PlatformFighterDrawConfig(
+    palette=PALETTE,
+    knobs=KNOBS,
+    foot_y=FOOT_Y,
+    face_rel_dy=FACE_REL_DY,
+    outline_buckets=OUTLINE_BUCKETS,
+    shadow_rgba=SHADOW,
+    swipe_core=SWIPE,
+    swipe_fade=SWIPE_FADE,
+    sprite_palette=SPRITE_PALETTE,
+    scarf_tip_nudge_dx=SCARF_TIP_NUDGE_DX,
+    clip_preserve_rgb=preserve_rgb_from_colors(
+        list(PALETTE.scarf or ()) + [SCARF_OUTLINE],
+        SPRITE_PALETTE,
+    ),
+)
 
 
 @dataclass
@@ -123,10 +146,13 @@ class Rig:
     elbow: Tuple[int, int] = P128.elbow
     hand: Tuple[int, int] = P128.hand
     head: Tuple[int, int] = P128.head
+    face: Tuple[int, int] = P128.face
     neck: Tuple[int, int] = P128.neck
     slash: float = 0.0
     spark: bool = False
     dash_ghost: bool = False
+    scarf_stamp_clip: str | None = "idle"
+    scarf_stamp_frame: int = 0
 
 
 def finalize(r: Rig) -> Rig:
@@ -144,6 +170,7 @@ def finalize(r: Rig) -> Rig:
         r.head,
         neck=r.neck,
     )
+    pts["face"] = face_anchor_from_head(pts["head"])
     return Rig(
         dy=0,
         lean=0,
@@ -158,6 +185,8 @@ def finalize(r: Rig) -> Rig:
         slash=r.slash,
         spark=r.spark,
         dash_ghost=r.dash_ghost,
+        scarf_stamp_clip=r.scarf_stamp_clip,
+        scarf_stamp_frame=r.scarf_stamp_frame,
         **pts,
     )
 
@@ -181,180 +210,9 @@ def _rig_with_scarf(k: dict, **extra) -> Rig:
     return Rig(**_scarf_fields(k, body_dy=body_dy), **extra)
 
 
-def _draw_scarf(s: Sprite, r: Rig, *, behind: bool) -> None:
-    draw_scarf_mass(
-        s,
-        r.neck,
-        scarf=PALETTE.scarf,
-        phase=r.scarf_phase,
-        behind=behind,
-        wave_offset=r.scarf_wave,
-        lift_offset=r.scarf_lift,
-        tip_dx=r.scarf_tip_dx,
-        tip_dy=r.scarf_tip_dy,
-        tip_world_x=r.scarf_tip_world_x,
-        head_y=r.head[1],
-        face_y_adj=REF_DESIGN_FACE_Y_ADJ,
-    )
-
-
-def _draw_head(s: Sprite, r: Rig, *, layers: str = "full") -> None:
-    cx, cy = r.head
-    eye = PALETTE.eye
-    ch.fighter_head_facing_right(
-        s,
-        cx,
-        cy,
-        skin=PALETTE.skin,
-        hair=PALETTE.hair,
-        pupil=eye.pupil,
-        iris=eye.iris,
-        sclera=eye.sclera,
-        paper=eye.paper,
-        blush=eye.blush,
-        look=KNOBS.head,
-        hair_sway=r.hair_sway,
-        layers=layers,
-    )
-
-
-def _draw_head_pass(s: Sprite, r: Rig) -> None:
-    """Face + fringe + eye on top of scarf knot and front arm."""
-    if KNOBS.head.hair_style == "ref_design":
-        _draw_head(s, r, layers="face_front")
-    else:
-        _draw_head(s, r, layers="full")
-
-
-def _back_arm_pts(r: Rig) -> tuple:
-    """Back gi arm — left/down from P128; idle tuned to design glove bbox ~(54–67, 64–79)."""
-    return (
-        (r.shoulder[0] - 6, r.shoulder[1] + 4),
-        (r.elbow[0] - 8, r.elbow[1] + 10),
-        (r.hand[0] - 12, r.hand[1] + 12),
-    )
-
-
-def _draw_back_arm_upper(s: Sprite, r: Rig) -> None:
-    sh, el, ha = _back_arm_pts(r)
-    draw_arm_gi(
-        s,
-        sh,
-        el,
-        ha,
-        shirt=PALETTE.shirt,
-        skin=PALETTE.skin,
-        glove=PALETTE.glove,
-        back=True,
-        part="upper",
-    )
-
-
-def _draw_back_arm_lower(s: Sprite, r: Rig) -> None:
-    sh, el, ha = _back_arm_pts(r)
-    draw_arm_gi(
-        s,
-        sh,
-        el,
-        ha,
-        shirt=PALETTE.shirt,
-        skin=PALETTE.skin,
-        glove=PALETTE.glove,
-        back=True,
-        part="lower",
-    )
-
-
-def _draw_body_no_outline(s: Sprite, r: Rig) -> None:
-    draw_platform_leg(s, hip=r.hip, knee=r.knee_b, foot=r.foot_b, back=True, palette=PALETTE)
-    _draw_scarf(s, r, behind=True)
-    _draw_back_arm_upper(s, r)
-    draw_platform_torso(s, KNOBS.outfit, hip=r.hip, shoulder=r.shoulder, palette=PALETTE, squash=r.squash)
-    draw_chest_bridge(s, r.shoulder, shirt=PALETTE.shirt)
-    draw_platform_leg(s, hip=r.hip, knee=r.knee_f, foot=r.foot_f, back=False, palette=PALETTE)
-    _draw_back_arm_lower(s, r)
-    draw_neck_bridge(s, r.neck, r.head, skin=PALETTE.skin, face_y_adj=REF_DESIGN_FACE_Y_ADJ)
-    _draw_head(s, r, layers="hair_back")
-    _draw_scarf(s, r, behind=False)
-    _draw_front_arm(s, r)
-    _draw_head_pass(s, r)
-
-
-def _front_arm_pts(r: Rig) -> tuple:
-    """Shoulder/hand sit ~2px lower on gi — matches design sheet idle."""
-    dy = 2
-    return (
-        (r.shoulder[0], r.shoulder[1] + dy),
-        (r.elbow[0], r.elbow[1] + dy),
-        (r.hand[0], r.hand[1] + dy),
-    )
-
-
-def _draw_front_arm(s: Sprite, r: Rig) -> None:
-    sh, el, ha = _front_arm_pts(r)
-    draw_arm_gi(
-        s,
-        sh,
-        el,
-        ha,
-        shirt=PALETTE.shirt,
-        skin=PALETTE.skin,
-        glove=PALETTE.glove,
-        back=False,
-    )
-
-
-def draw_shadow(s: Sprite, r: Rig) -> None:
-    cx = (r.foot_f[0] + r.foot_b[0]) // 2
-    ch.drop_shadow_oval(s, cx, FOOT_Y, SHADOW, half_w=6)
-
-
-def draw_frame_content(s: Sprite, r: Rig) -> None:
-    if r.dash_ghost:
-        g = Rig(**{**r.__dict__, "lean": r.lean - 6, "dash_ghost": False})
-        ch.stamp_silhouette_ghost(
-            s,
-            W,
-            H,
-            SPRITE_PALETTE,
-            (24, 16, 28, 72),
-            lambda tmp, gr=g: _draw_body_no_outline(tmp, gr),
-        )
-    draw_platform_leg(s, hip=r.hip, knee=r.knee_b, foot=r.foot_b, back=True, palette=PALETTE)
-    _draw_scarf(s, r, behind=True)
-    _draw_back_arm_upper(s, r)
-    draw_platform_torso(s, KNOBS.outfit, hip=r.hip, shoulder=r.shoulder, palette=PALETTE, squash=r.squash)
-    draw_chest_bridge(s, r.shoulder, shirt=PALETTE.shirt)
-    draw_platform_leg(s, hip=r.hip, knee=r.knee_f, foot=r.foot_f, back=False, palette=PALETTE)
-    _draw_back_arm_lower(s, r)
-    draw_neck_bridge(s, r.neck, r.head, skin=PALETTE.skin, face_y_adj=REF_DESIGN_FACE_Y_ADJ)
-    _draw_head(s, r, layers="hair_back")
-    _draw_scarf(s, r, behind=False)
-    _draw_front_arm(s, r)
-    _draw_head_pass(s, r)
-    if r.slash > 0.1:
-        hx, hy = _front_arm_pts(r)[2]
-        draw_slash_arc(
-            s,
-            hx,
-            hy - 8,
-            deg0=-120 + r.slash * 40,
-            deg1=-40 + r.slash * 20,
-            radius=28,
-            core=SWIPE,
-            fade=SWIPE_FADE,
-        )
-    if r.spark:
-        hx, hy = _front_arm_pts(r)[2]
-        draw_spark_streak(s, hx - 6, hy + 4, hx + 18, hy - 12, core=SWIPE)
-    ch.finish_selective_humanoid(s, OUTLINE_BUCKETS, fallback=PALETTE.ink)
-
-
 def draw_frame(s: Sprite, rig_in: Rig) -> None:
     s.clear()
-    r = finalize(rig_in)
-    draw_shadow(s, r)
-    draw_frame_content(s, r)
+    draw_platform_fighter_frame(s, rig_in, FIGHTER_DRAW, finalize=finalize)
 
 
 def idle_rig(i: int) -> Rig:
@@ -364,6 +222,8 @@ def idle_rig(i: int) -> Rig:
         k,
         hair_sway=(i % 3) - 1,
         squash=0.98 + (i % 2) * 0.02,
+        scarf_stamp_clip="idle",
+        scarf_stamp_frame=i,
     )
 
 
@@ -381,6 +241,8 @@ def walk_rig(i: int) -> Rig:
         knee_f=(P128.knee_f[0] + int(s * 4), P128.knee_f[1] - int(max(0, s) * 3)),
         knee_b=(P128.knee_b[0] - int(s * 2), P128.knee_b[1] + int(max(0, -s) * 2)),
         hand=(P128.hand[0] + int(s * 2), P128.hand[1] + int(s)),
+        scarf_stamp_clip="walk",
+        scarf_stamp_frame=i,
     )
 
 
@@ -391,7 +253,7 @@ def run_rig(i: int) -> Rig:
     s = math.sin(ph)
     return _rig_with_scarf(
         k,
-        lean=3,
+        lean=int(s * 2),
         squash=0.94,
         hair_sway=int(s * 3),
         foot_f=(P128.foot_f[0] + int(s * 7), FOOT_Y),
@@ -400,6 +262,8 @@ def run_rig(i: int) -> Rig:
         knee_b=(P128.knee_b[0] - 3, P128.knee_b[1] - 4),
         shoulder=(P128.shoulder[0] + 2, P128.shoulder[1] - 1),
         hand=(P128.hand[0] + 4, P128.hand[1] - 2),
+        scarf_stamp_clip="run",
+        scarf_stamp_frame=i,
     )
 
 

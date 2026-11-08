@@ -392,6 +392,301 @@
           "dy": -1
         }
       ]
+    },
+    "jump": {
+      "source": "synthetic_from_idle",
+      "frame_w": 102,
+      "frames": 6,
+      "tip_range": [
+        34,
+        38
+      ],
+      "keys": [
+        {
+          "i": 0,
+          "tip_x": 34,
+          "attach_x": 56,
+          "tip_dx": -22,
+          "tip_dy": -14,
+          "centroid_y": 49.35,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": -1,
+          "dy": 0
+        },
+        {
+          "i": 1,
+          "tip_x": 34,
+          "attach_x": 57,
+          "tip_dx": -23,
+          "tip_dy": -7,
+          "centroid_y": 48.11,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 2,
+          "tip_x": 35,
+          "attach_x": 57,
+          "tip_dx": -22,
+          "tip_dy": -6,
+          "centroid_y": 48.89,
+          "phase_hint": 0.25,
+          "wave": 1,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 3,
+          "tip_x": 36,
+          "attach_x": 57,
+          "tip_dx": -21,
+          "tip_dy": -4,
+          "centroid_y": 48.32,
+          "phase_hint": 0.5,
+          "wave": 0,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 4,
+          "tip_x": 36,
+          "attach_x": 58,
+          "tip_dx": -22,
+          "tip_dy": -5,
+          "centroid_y": 48.12,
+          "phase_hint": 0.5,
+          "wave": 0,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 5,
+          "tip_x": 37,
+          "attach_x": 58,
+          "tip_dx": -21,
+          "tip_dy": -8,
+          "centroid_y": 48.44,
+          "phase_hint": 0.75,
+          "wave": -1,
+          "lift": 0,
+          "dy": 0
+        }
+      ]
+    },
+    "fall": {
+      "source": "synthetic_from_idle",
+      "frame_w": 102,
+      "frames": 4,
+      "tip_range": [
+        34,
+        38
+      ],
+      "keys": [
+        {
+          "i": 0,
+          "tip_x": 34,
+          "attach_x": 56,
+          "tip_dx": -22,
+          "tip_dy": -14,
+          "centroid_y": 49.35,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": -1,
+          "dy": 0
+        },
+        {
+          "i": 1,
+          "tip_x": 34,
+          "attach_x": 57,
+          "tip_dx": -23,
+          "tip_dy": -7,
+          "centroid_y": 48.11,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 2,
+          "tip_x": 35,
+          "attach_x": 57,
+          "tip_dx": -22,
+          "tip_dy": -6,
+          "centroid_y": 48.89,
+          "phase_hint": 0.25,
+          "wave": 1,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 3,
+          "tip_x": 36,
+          "attach_x": 57,
+          "tip_dx": -21,
+          "tip_dy": -4,
+          "centroid_y": 48.32,
+          "phase_hint": 0.5,
+          "wave": 0,
+          "lift": 0,
+          "dy": 0
+        }
+      ]
+    },
+    "fall_loop": {
+      "source": "synthetic_from_idle",
+      "frame_w": 102,
+      "frames": 3,
+      "tip_range": [
+        34,
+        38
+      ],
+      "keys": [
+        {
+          "i": 0,
+          "tip_x": 34,
+          "attach_x": 56,
+          "tip_dx": -22,
+          "tip_dy": -14,
+          "centroid_y": 49.35,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": -1,
+          "dy": 0
+        },
+        {
+          "i": 1,
+          "tip_x": 34,
+          "attach_x": 57,
+          "tip_dx": -23,
+          "tip_dy": -7,
+          "centroid_y": 48.11,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 2,
+          "tip_x": 35,
+          "attach_x": 57,
+          "tip_dx": -22,
+          "tip_dy": -6,
+          "centroid_y": 48.89,
+          "phase_hint": 0.25,
+          "wave": 1,
+          "lift": 0,
+          "dy": 0
+        }
+      ]
+    },
+    "combo_1": {
+      "source": "synthetic_from_idle",
+      "frame_w": 102,
+      "frames": 3,
+      "tip_range": [
+        34,
+        38
+      ],
+      "keys": [
+        {
+          "i": 0,
+          "tip_x": 34,
+          "attach_x": 56,
+          "tip_dx": -22,
+          "tip_dy": -14,
+          "centroid_y": 49.35,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": -1,
+          "dy": 0
+        },
+        {
+          "i": 1,
+          "tip_x": 34,
+          "attach_x": 57,
+          "tip_dx": -23,
+          "tip_dy": -7,
+          "centroid_y": 48.11,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 2,
+          "tip_x": 35,
+          "attach_x": 57,
+          "tip_dx": -22,
+          "tip_dy": -6,
+          "centroid_y": 48.89,
+          "phase_hint": 0.25,
+          "wave": 1,
+          "lift": 0,
+          "dy": 0
+        }
+      ]
+    },
+    "combo_1_end": {
+      "source": "synthetic_from_idle",
+      "frame_w": 102,
+      "frames": 4,
+      "tip_range": [
+        34,
+        38
+      ],
+      "keys": [
+        {
+          "i": 0,
+          "tip_x": 34,
+          "attach_x": 56,
+          "tip_dx": -22,
+          "tip_dy": -14,
+          "centroid_y": 49.35,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": -1,
+          "dy": 0
+        },
+        {
+          "i": 1,
+          "tip_x": 34,
+          "attach_x": 57,
+          "tip_dx": -23,
+          "tip_dy": -7,
+          "centroid_y": 48.11,
+          "phase_hint": 0.0,
+          "wave": 2,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 2,
+          "tip_x": 35,
+          "attach_x": 57,
+          "tip_dx": -22,
+          "tip_dy": -6,
+          "centroid_y": 48.89,
+          "phase_hint": 0.25,
+          "wave": 1,
+          "lift": 0,
+          "dy": 0
+        },
+        {
+          "i": 3,
+          "tip_x": 36,
+          "attach_x": 57,
+          "tip_dx": -21,
+          "tip_dy": -4,
+          "centroid_y": 48.32,
+          "phase_hint": 0.5,
+          "wave": 0,
+          "lift": 0,
+          "dy": 0
+        }
+      ]
     }
   }
 }

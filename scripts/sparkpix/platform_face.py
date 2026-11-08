@@ -8,7 +8,9 @@ from typing import Literal, Sequence
 from sparkpix.canvas import Sprite
 from sparkpix.color import ColorLike
 from sparkpix import jrpg_face as jf
-from sparkpix.platform_ref_hair import REF_DESIGN_FACE_Y_ADJ, draw_ref_male_hero_hair
+from sparkpix.platform_ref_face import draw_ref_male_hero_face
+from sparkpix.platform_ref_hair import draw_ref_male_hero_hair
+from sparkpix.platform_style import face_y_from_head_joint
 
 ColorSeq = Sequence[ColorLike]
 HeadLayer = Literal["full", "hair_back", "face_front", "fringe"]
@@ -38,9 +40,9 @@ class FighterHeadLook:
 
 
 def _head_cy(cy: int, hair_style: str) -> int:
-    """Hair stamps + face blocks share the same design facial Y on ``P128.head``."""
+    """``ref_design``: facial stamp row from skeleton head joint Y (see ``P128.face``)."""
     if hair_style == "ref_design":
-        return cy + REF_DESIGN_FACE_Y_ADJ
+        return face_y_from_head_joint(cy)
     return cy
 
 
@@ -53,21 +55,28 @@ def _draw_face_base(
     *,
     blush_on: bool,
     hair_style: str,
+    eye_kw: dict | None = None,
+    hair_sway: int = 0,
 ) -> None:
     hcy = _head_cy(cy, hair_style)
     if hair_style == "ref_design":
-        jf._draw_face_skin_compact(s, cx, hcy, skin, q=_HQ, qb=_HQB)
-        s.rect(cx - 6, hcy, cx - 4, hcy + 4, fill=skin[2], only="opaque")
-        s.px(cx - 5, hcy + 1, skin[-1], only="opaque")
-        s.rect(cx - 1, hcy, cx + 5, hcy + 6, fill=skin[2], only="opaque")
-        s.rect(cx, hcy + 5, cx + 4, hcy + 8, fill=skin[1], only="opaque")
+        kw = eye_kw or {}
+        draw_ref_male_hero_face(
+            s,
+            cx,
+            hcy,
+            skin,
+            pupil=kw.get("pupil", skin[0]),
+            iris=kw.get("iris", skin[-1]),
+            sclera=kw.get("sclera", "#ffffff"),
+            sway=hair_sway,
+            layer="skin",
+        )
     else:
         jf._draw_face_skin_youth(s, cx, hcy, skin, q=_HQ, qb=_HQB)
-    if blush_on:
-        s.px(cx + 6, hcy + 4, blush, only="opaque")
-        s.px(cx + 7, hcy + 5, blush, only="opaque")
-        if hair_style == "ref_design":
-            s.px(cx - 4, hcy + 2, blush, only="opaque")
+        if blush_on:
+            s.px(cx + 6, hcy + 4, blush, only="opaque")
+            s.px(cx + 7, hcy + 5, blush, only="opaque")
 
 
 def _draw_forward_eye(
@@ -84,12 +93,7 @@ def _draw_forward_eye(
 ) -> None:
     hcy = _head_cy(cy, hair_style)
     if hair_style == "ref_design":
-        ex, ey = cx + 3, hcy
-        s.px(ex + 1, ey, iris)
-        s.px(ex + 2, ey, sclera)
-        s.px(ex, ey + 1, pupil)
-        s.px(ex + 2, ey + 1, sclera)
-        s.px(ex + 3, ey, sclera)
+        return
     else:
         ex, ey = cx + 4, hcy + 1
         s.px(ex, ey - 1, brow, only="opaque")
@@ -133,11 +137,22 @@ def _draw_ref_full_head(
     eye_kw: dict,
 ) -> None:
     draw_ref_male_hero_hair(s, cx, _head_cy(cy, "ref_design"), hair, sway=sway, layer="hair_back")
-    _draw_face_base(s, cx, cy, skin, blush, blush_on=cfg.show_blush, hair_style="ref_design")
+    _draw_face_base(
+        s, cx, cy, skin, blush, blush_on=cfg.show_blush, hair_style="ref_design", eye_kw=eye_kw, hair_sway=sway
+    )
     draw_ref_male_hero_hair(s, cx, _head_cy(cy, "ref_design"), hair, sway=sway, layer="face_front")
     draw_ref_male_hero_hair(s, cx, _head_cy(cy, "ref_design"), hair, sway=sway, layer="fringe")
-    if cfg.eye_style == "forward":
-        _draw_forward_eye(s, cx, cy, **eye_kw, hair_style="ref_design")
+    draw_ref_male_hero_face(
+        s,
+        cx,
+        _head_cy(cy, "ref_design"),
+        skin,
+        pupil=eye_kw["pupil"],
+        iris=eye_kw["iris"],
+        sclera=eye_kw["sclera"],
+        sway=sway,
+        layer="eye",
+    )
 
 
 def draw_fighter_profile_head(
@@ -169,13 +184,32 @@ def draw_fighter_profile_head(
 
     if layers == "face_front":
         if cfg.hair_style == "ref_design":
-            _draw_face_base(s, cx, cy, skin, blush, blush_on=cfg.show_blush, hair_style=cfg.hair_style)
+            _draw_face_base(
+                s,
+                cx,
+                cy,
+                skin,
+                blush,
+                blush_on=cfg.show_blush,
+                hair_style=cfg.hair_style,
+                eye_kw=eye_kw,
+                hair_sway=hair_sway,
+            )
             draw_ref_male_hero_hair(
                 s, cx, _head_cy(cy, "ref_design"), hair, sway=hair_sway, layer="face_front"
             )
             draw_ref_male_hero_hair(s, cx, _head_cy(cy, "ref_design"), hair, sway=hair_sway, layer="fringe")
-            if cfg.eye_style == "forward":
-                _draw_forward_eye(s, cx, cy, **eye_kw, hair_style=cfg.hair_style)
+            draw_ref_male_hero_face(
+                s,
+                cx,
+                _head_cy(cy, "ref_design"),
+                skin,
+                pupil=eye_kw["pupil"],
+                iris=eye_kw["iris"],
+                sclera=eye_kw["sclera"],
+                sway=hair_sway,
+                layer="eye",
+            )
         else:
             _draw_face_base(s, cx, cy, skin, blush, blush_on=cfg.show_blush, hair_style=cfg.hair_style)
             _draw_hair(s, cx, cy, hair, hair_sway, cfg.hair_style, layer="face_front")

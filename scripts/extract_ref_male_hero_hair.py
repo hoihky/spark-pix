@@ -10,6 +10,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
 SRC = ROOT / "pixel-art" / "_study" / "male_hero_ref" / "design" / "source_1x.png"
 OUT = ROOT / "scripts" / "sparkpix" / "ref_male_hero_hair.json"
 
@@ -20,8 +21,14 @@ HAIR_RGB = {
     (0xA2, 0x4E, 0x57): 3,
     (0xD7, 0x7E, 0x86): 4,
 }
-# Design facial landmark: ``P128.head`` + ``REF_DESIGN_FACE_Y_ADJ`` (see platform_ref_hair).
-ANCHOR = (62, 54)
+# Stamp origin = design facial landmark (``P128.face`` / ``ref_male_hero_landmarks.json``).
+def _face_anchor() -> tuple[int, int]:
+    from sparkpix.platform_style import face_anchor_at_rest
+
+    return face_anchor_at_rest()
+
+
+ANCHOR = _face_anchor()
 MAX_Y = 70  # exclude scarf/boot pixels that reuse hair ramp colors
 
 
