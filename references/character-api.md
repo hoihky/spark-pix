@@ -41,8 +41,17 @@ Optional orchestrator: `ch.draw_humanoid_layer_order(...)` with callables for ea
 | `platformer_leg(...)` | Thigh + shin + boot block |
 | `torso_hoodie(...)` | Hoodie + shirt + shorts waist |
 | `profile_head_facing_right(...)` | Wrapper → `jrpg_face.draw_jrpg_profile_head`; pass **`look=JrpgHeadLook(...)`** |
+| `fighter_head_facing_right(...)` | Wrapper → `platform_face.draw_fighter_profile_head`; **`look=FighterHeadLook(...)`** |
 | `JrpgHeadLook` | `scripts/sparkpix/jrpg_face.py` — hair/eye/forehead/beard knobs |
+| `FighterHeadLook` | `platform_face.py` — default **`ref_design`** (132-px stamp from design sheet; palette only), or **`hero_spiky`** JRPG spiky @ q=0; forward eye, blush |
 | `jrpg_body` | `draw_q_tunic_torso`, `draw_q_long_coat_torso`, `draw_q_leg`, arm helpers, **`draw_q_chest_bridge`** |
+| `platform_body` | `draw_torso_gi`, `draw_shorts_leg`, `draw_arm_gi`, `draw_chest_bridge` |
+| `platform_scarf` | `draw_scarf_mass(neck, phase, behind=)` |
+| `platform_vfx` | `draw_slash_arc`, `draw_spark_streak` |
+| `platform_style` | **`P128`**, **`FOOT_Y`**, default joint tuples |
+| **`hero_config`** | **`CharacterPalette`**, **`JrpgHeroKnobs`** / **`PlatformHeroKnobs`**, **`AnimationPlan`**, style id lists — [hero-config.md](hero-config.md) |
+| `platform_outfit` | `draw_jrpg_*` / `draw_platform_*` — outfit style dispatch |
+| `platform_weapon` | `draw_weapon`, `draw_weapon_baton` — weapon style + color ramp |
 | `mech_head_facing_right(...)` | Robot helmet + vertical visor eye (no mouth); **`cute=True`** for Q dome |
 | `drop_shadow_oval(...)` | Foot-centered oval shadow |
 | `weapon_angle_trail(...)` | Multi-angle smear |
@@ -51,6 +60,7 @@ Optional orchestrator: `ch.draw_humanoid_layer_order(...)` with callables for ea
 | `stamp_silhouette_ghost(...)` | Dash afterimage (draw fn without outline) |
 | `finish_outside_outline(s, ink)` | Outline only |
 | **`finish_production_humanoid(s, ink)`** | **Speck trim + outline (ship pass)** |
+| **`finish_selective_humanoid(s, buckets, fallback=ink)`** | Same-hue selective outline ([techniques.md](techniques.md)) |
 | `warn_if_stick_legs(s, foot_y, frame=0)` | Print WARN if legs too thin |
 
 ## `render` module

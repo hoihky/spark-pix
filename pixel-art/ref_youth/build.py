@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Reference youth — cyan spiky hair, 2×3 vertical eye, olive tunic + fists.
+Reference youth — canonical ``hero_config`` JRPG Q pack.
 
-Matches project reference screenshot (side +X). Clips: idle, walk, run.
+Cyan spiky hair, vertical eye, olive tunic. Clips driven by ``AnimationPlan``.
 """
 
 from __future__ import annotations
@@ -18,14 +18,29 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from sparkpix import Sprite, ramp  # noqa: E402
 from sparkpix import character as ch  # noqa: E402
-from sparkpix import jrpg_body as jb  # noqa: E402
 from sparkpix import rig  # noqa: E402
+from sparkpix.hero_config import (  # noqa: E402
+    AnimationPlan,
+    CharacterPalette,
+    ClipSpec,
+    EyeColors,
+    JrpgHeroKnobs,
+    validate_knobs,
+)
 from sparkpix.jrpg_face import JrpgHeadLook  # noqa: E402
+from sparkpix.platform_outfit import (  # noqa: E402
+    draw_jrpg_arm,
+    draw_jrpg_chest_bridge,
+    draw_jrpg_leg,
+    draw_jrpg_torso,
+)
 from sparkpix.q_style import FOOT_Y, KNEE_Y, MIN_HEIGHT_FILL, Q64  # noqa: E402
 
 OUT = Path(__file__).resolve().parent / "out"
 W, H = 64, 64
 NAME = "ref_youth"
+
+# --- Developer knobs (also documented in PROMPT.md) ---------------------------------
 
 HEAD_LOOK = JrpgHeadLook(
     hair_style="spiky",
@@ -35,20 +50,42 @@ HEAD_LOOK = JrpgHeadLook(
     fringe_over_eye=True,
 )
 
-SKIN = ramp("#d8a880", 4)
-HAIR = ramp("#0c2840", 5)
-TUNIC = ramp("#786840", 4)
-PANTS = ramp("#382820", 4)
-BOOT = ramp("#503828", 3)
-SCARF = TUNIC
 INK = "#101420"
-PAPER = "#f8fcff"
-PUPIL = "#0a1018"
-IRIS = "#2878a8"
-SCLERA = "#ffffff"
-SHADOW = (12, 10, 18, 90)
+PALETTE = CharacterPalette(
+    hair=ramp("#0c2840", 5),
+    skin=ramp("#d8a880", 4),
+    shirt=ramp("#786840", 4),
+    pants=ramp("#382820", 4),
+    boot=ramp("#503828", 3),
+    ink=INK,
+    eye=EyeColors(pupil="#0a1018", iris="#2878a8", sclera="#ffffff", paper="#f8fcff"),
+)
 
-PALETTE = [INK, PAPER, PUPIL, IRIS, SCLERA] + SKIN + HAIR + TUNIC + PANTS + BOOT + [SHADOW]
+KNOBS = JrpgHeroKnobs(
+    head=HEAD_LOOK,
+    outfit="tunic",
+    shoe="q_boot",
+    weapon="none",
+    animation=AnimationPlan(
+        (
+            ClipSpec("idle", 4, 4.0),
+            ClipSpec("walk", 8, 10.0),
+            ClipSpec("run", 6, 14.0),
+        )
+    ),
+)
+validate_knobs(KNOBS)
+
+SHADOW = (12, 10, 18, 90)
+SPRITE_PALETTE = (
+    [INK, PALETTE.eye.paper, PALETTE.eye.pupil, PALETTE.eye.iris, PALETTE.eye.sclera]
+    + list(PALETTE.skin)
+    + list(PALETTE.hair)
+    + list(PALETTE.shirt)
+    + list(PALETTE.pants)
+    + list(PALETTE.boot)
+    + [SHADOW]
+)
 
 
 @dataclass
@@ -69,8 +106,17 @@ class Rig:
 
 def finalize(r: Rig) -> Rig:
     pts = rig.apply_shift(
-        r.dy, r.lean, r.foot_f, r.foot_b, r.knee_f, r.knee_b,
-        r.hip, r.shoulder, r.elbow, r.hand, r.head,
+        r.dy,
+        r.lean,
+        r.foot_f,
+        r.foot_b,
+        r.knee_f,
+        r.knee_b,
+        r.hip,
+        r.shoulder,
+        r.elbow,
+        r.hand,
+        r.head,
     )
     return Rig(dy=0, lean=0, squash=r.squash, **pts)
 
@@ -82,28 +128,63 @@ def draw_shadow(s: Sprite, r: Rig) -> None:
 
 def draw_head(s: Sprite, r: Rig) -> None:
     cx, cy = r.head
+    eye = PALETTE.eye
     ch.profile_head_facing_right(
-        s, cx, cy,
-        skin=SKIN, hair=HAIR, band=SCARF,
-        eye_green=IRIS, sclera=SCLERA, paper=PAPER, pupil=PUPIL,
-        lash=HAIR[0], look=HEAD_LOOK, cute=True,
+        s,
+        cx,
+        cy,
+        skin=PALETTE.skin,
+        hair=PALETTE.hair,
+        band=PALETTE.shirt,
+        eye_green=eye.iris,
+        sclera=eye.sclera,
+        paper=eye.paper,
+        pupil=eye.pupil,
+        lash=PALETTE.hair[0],
+        look=KNOBS.head,
+        cute=True,
     )
 
 
 def draw_back_arm(s: Sprite, r: Rig) -> None:
     sx, sy = r.shoulder[0] - 2, r.shoulder[1] + 1
-    ch.limb(s, (sx, sy), (sx - 3, sy + 7), 2, TUNIC[1])
+    ch.limb(s, (sx, sy), (sx - 3, sy + 7), 2, PALETTE.shirt[1])
 
 
 def draw_frame_content(s: Sprite, r: Rig) -> None:
-    jb.draw_q_leg(s, r.hip, r.knee_b, r.foot_b, back=True, pants=PANTS, boot=BOOT)
+    draw_jrpg_leg(
+        s,
+        KNOBS.outfit,
+        hip=r.hip,
+        knee=r.knee_b,
+        foot=r.foot_b,
+        back=True,
+        palette=PALETTE,
+        shoe=KNOBS.shoe,
+    )
     draw_back_arm(s, r)
-    jb.draw_q_tunic_torso(s, r.hip, tunic=TUNIC, pants=PANTS, squash=r.squash)
-    jb.draw_q_chest_bridge(s, r.shoulder, cloth=TUNIC)
-    jb.draw_q_leg(s, r.hip, r.knee_f, r.foot_f, back=False, pants=PANTS, boot=BOOT)
+    draw_jrpg_torso(
+        s,
+        KNOBS.outfit,
+        hip=r.hip,
+        shoulder=r.shoulder,
+        palette=PALETTE,
+        squash=r.squash,
+    )
+    draw_jrpg_chest_bridge(s, KNOBS.outfit, r.shoulder, PALETTE)
+    draw_jrpg_leg(
+        s,
+        KNOBS.outfit,
+        hip=r.hip,
+        knee=r.knee_f,
+        foot=r.foot_f,
+        back=False,
+        palette=PALETTE,
+        shoe=KNOBS.shoe,
+    )
     draw_head(s, r)
-    jb.draw_q_arm_sleeve(s, r.shoulder, r.elbow, r.hand, tunic=TUNIC, skin=SKIN)
-    ch.finish_production_humanoid(s, INK)
+    draw_jrpg_arm(s, KNOBS.outfit, shoulder=r.shoulder, elbow=r.elbow, hand=r.hand, palette=PALETTE)
+    ch.finish_production_humanoid(s, PALETTE.ink)
 
 
 def draw_frame(s: Sprite, rig_in: Rig) -> None:
@@ -134,7 +215,9 @@ def walk_rig(phase: float) -> Rig:
 def run_rig(phase: float) -> Rig:
     s = math.sin(phase)
     return Rig(
-        dy=int(s * 2), lean=2, squash=0.92,
+        dy=int(s * 2),
+        lean=2,
+        squash=0.92,
         foot_f=(Q64.foot_f[0] + 1 + int(s * 4), FOOT_Y),
         foot_b=(Q64.foot_b[0] - 3 - int(s * 3), FOOT_Y),
         knee_f=(Q64.knee_f[0] + int(s * 3), KNEE_Y - 4 - int(abs(s) * 3)),
@@ -146,27 +229,26 @@ def run_rig(phase: float) -> Rig:
     )
 
 
-def build_all() -> Tuple[List[Rig], List[Tuple[str, int, int, float, bool]]]:
+def rigs_for_clip(spec: ClipSpec) -> List[Rig]:
+    if spec.name == "idle":
+        return [idle_rig(i) for i in range(spec.frames)]
+    if spec.name == "walk":
+        return [walk_rig(i / spec.frames * math.pi * 2) for i in range(spec.frames)]
+    if spec.name == "run":
+        return [run_rig(i / spec.frames * math.pi * 2) for i in range(spec.frames)]
+    raise KeyError(spec.name)
+
+
+def build_all() -> List[Rig]:
     rigs: List[Rig] = []
-    clips: List[Tuple[str, int, int, float, bool]] = []
-    idx = 0
-
-    def add(name: str, items: List[Rig], fps: float, loop: bool) -> None:
-        nonlocal idx
-        start = idx
-        rigs.extend(items)
-        idx += len(items)
-        clips.append((name, start, idx - 1, fps, loop))
-
-    add("idle", [idle_rig(i) for i in range(4)], 4.0, True)
-    add("walk", [walk_rig(i / 8 * math.pi * 2) for i in range(8)], 10.0, True)
-    add("run", [run_rig(i / 6 * math.pi * 2) for i in range(6)], 14.0, True)
-    return rigs, clips
+    for spec in KNOBS.animation.enabled():
+        rigs.extend(rigs_for_clip(spec))
+    return rigs
 
 
 def main() -> None:
-    rigs, clips = build_all()
-    s = Sprite(W, H, palette=PALETTE)
+    rigs = build_all()
+    s = Sprite(W, H, palette=SPRITE_PALETTE)
     for i, rig_item in enumerate(rigs):
         if i > 0:
             s.add_frame(copy=False)
@@ -178,8 +260,7 @@ def main() -> None:
     matte = "#343848"
     s.preview(OUT / "preview_idle.png", scale=8, matte=matte)
     s.preview(OUT / "preview_sheet.png", scale=4, grid=True, matte=matte)
-    for name, a, b, fps, loop in clips:
-        s.tag_clip(name, a, b, fps=fps, loop=loop)
+    KNOBS.animation.tag_on_sprite(s)
     s.save_gif(OUT / f"{NAME}_all.gif", scale=4)
     s.save_spritesheet(OUT / NAME, columns=10, padding=0, spark_json=True)
     s.save_project(OUT / f"{NAME}.sparkpix.json")
@@ -187,8 +268,15 @@ def main() -> None:
     from sparkpix.quality import build_quality_meta, critique_atlas_dir, format_report, write_quality_sidecar
 
     write_quality_sidecar(
-        OUT, NAME,
-        build_quality_meta(outline_ink=INK, foot_y=FOOT_Y, critique_frames=[0], max_colors=36, min_height_fill=MIN_HEIGHT_FILL),
+        OUT,
+        NAME,
+        build_quality_meta(
+            outline_ink=PALETTE.ink,
+            foot_y=FOOT_Y,
+            critique_frames=[0],
+            max_colors=36,
+            min_height_fill=MIN_HEIGHT_FILL,
+        ),
     )
     text = format_report(critique_atlas_dir(OUT))
     if text != "OK (no quality warnings)":

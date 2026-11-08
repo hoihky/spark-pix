@@ -122,6 +122,22 @@ Save the filled prompt as `pixel-art/<name>/PROMPT.md` (or show in chat).
 - Outfit: …
 - Weapon: …
 
+## Character knobs (must match `build.py`)
+
+Document these so Phase 3 matches art direction ([hero-config.md](hero-config.md)):
+
+| Category | Prompt field | `build.py` |
+|----------|--------------|------------|
+| Hair style | spiky / ref_design / flowing / … | `HEAD_LOOK.hair_style` |
+| Hair color | hue family | `HAIR = ramp("#…", 5)` |
+| Eye color | iris / sclera | `EyeColors(...)` or pupil/iris/sclera args |
+| Face style | vertical / forward / expressive | `HEAD_LOOK.eye_style`, beard, fringe |
+| Clothes style | gi / tunic / dress / … | `KNOBS.outfit` |
+| Clothes colors | shirt, pants, trim | `CharacterPalette` ramps |
+| Shoe style | boot / slip | `KNOBS.shoe` + `BOOT` ramp |
+| Weapon type | scarf / baton / none | `KNOBS.weapon` + `WEAPON` ramp |
+| Animations | clip list + frame counts | `AnimationPlan.from_table(...)` |
+
 ## Clips
 | Clip | Frames | FPS | Loop | Notes |
 |------|--------|-----|------|-------|

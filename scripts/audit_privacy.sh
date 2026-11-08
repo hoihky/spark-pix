@@ -9,10 +9,15 @@ RED='\033[0;31m'
 NC='\033[0m'
 fail=0
 
+SCAN_ALL="${AUDIT_PRIVACY_ALL:-}"
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
-  echo "Usage: $0" >&2
-  echo "Scans non-ignored project files for home paths and common secret patterns." >&2
+  echo "Usage: $0 [--all]" >&2
+  echo "Scans project text for home paths and common secret patterns." >&2
+  echo "Default: git tracked files only. --all / AUDIT_PRIVACY_ALL=1: full tree (respects .gitignore via rg)." >&2
   exit 0
+fi
+if [[ "${1:-}" == "--all" ]]; then
+  SCAN_ALL=1
 fi
 
 # Real home dirs (username must start with a letter; skips doc examples like /Users/...)
@@ -20,6 +25,7 @@ PATH_PATTERNS=(
   '/Users/[A-Za-z][A-Za-z0-9._-]*'
   '/home/[a-z][a-z0-9._-]*'
   '\\\\Users\\\\[A-Za-z][A-Za-z0-9._-]*'
+  'Users-[A-Za-z][A-Za-z0-9._-]*-(Desktop|Documents|Source)-'
 )
 
 SECRET_PATTERNS=(
@@ -76,6 +82,14 @@ check_patterns() {
 }
 
 iter_files() {
+  if [[ -n "$SCAN_ALL" ]] && command -v rg >/dev/null 2>&1; then
+  while IFS= read -r -d '' file; do
+    printf '%s\0' "$file"
+  done < <(rg --files -0 --hidden --glob '!.git' --glob '!.venv' --glob '!venv' \
+      --glob '!.cursor' --glob '!pixel-art/**/out' --glob '!pixel-art/_study' \
+      --glob '!**/__pycache__' . 2>/dev/null || true)
+    return
+  fi
   if git rev-parse --git-dir >/dev/null 2>&1; then
     git ls-files -z
   else

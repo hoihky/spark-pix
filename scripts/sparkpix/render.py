@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Sequence, Tuple
+from collections import Counter
+from typing import Iterable, Sequence, Tuple
 
 from PIL import Image
 
 from sparkpix.canvas import Sprite
-from sparkpix.color import ColorLike, RGBA
+from sparkpix.color import ColorLike, RGBA, parse_color
+from sparkpix import draw_ops
 
 ColorSeq = Sequence[ColorLike]
 
@@ -54,6 +56,94 @@ def finish_production_pass(
     s.outline(ink, where="outside")
     if trim_specks:
         # Outline can leave 0-neighbor ink on the canvas edge (frame border).
+        s.trim_isolated_specks(min_neighbors=0)
+
+
+def _rgb_key(px: RGBA) -> tuple[int, int, int]:
+    return px[0], px[1], px[2]
+
+
+def _lit_edge_skip(img: Image.Image, x: int, y: int, w: int, h: int) -> bool:
+    """Skip outline on upper-left lit silhouette (techniques.md)."""
+
+    def trans(px: int, py: int) -> bool:
+        if px < 0 or py < 0 or px >= w or py >= h:
+            return True
+        return img.getpixel((px, py))[3] == 0
+
+    lit = trans(x, y - 1) or trans(x - 1, y) or trans(x - 1, y - 1)
+    shadow_side = trans(x, y + 1) or trans(x + 1, y)
+    return lit and not shadow_side
+
+
+def selective_outside_outline(
+    s: Sprite,
+    buckets: Sequence[tuple[Sequence[ColorLike], ColorLike]],
+    *,
+    fallback: ColorLike,
+    skip_lit_edge: bool = True,
+) -> None:
+    """
+    Hull outline with same-hue dark inks per material group (not one global rim).
+    ``buckets``: ``(fill_colors, outline_ink)`` — fill may be hex strings.
+    """
+    img = s._img()
+    w, h = img.size
+    pal = s.palette
+    ink_map: dict[tuple[int, int, int], RGBA] = {}
+    for fills, ink in buckets:
+        out = parse_color(ink, pal)
+        if out is None:
+            continue
+        for f in fills:
+            c = parse_color(f, pal)
+            if c is not None:
+                ink_map[_rgb_key(c)] = out
+
+    fallback_rgba = parse_color(fallback, pal)
+    if fallback_rgba is None:
+        return
+
+    neighbors = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    for y in range(h):
+        for x in range(w):
+            px = img.getpixel((x, y))
+            if px[3] == 0:
+                continue
+            touches_t = any(
+                x + dx < 0 or y + dy < 0 or x + dx >= w or y + dy >= h or img.getpixel((x + dx, y + dy))[3] == 0
+                for dx, dy in neighbors
+            )
+            if not touches_t:
+                continue
+            if skip_lit_edge and _lit_edge_skip(img, x, y, w, h):
+                continue
+            interior: Counter = Counter()
+            for dx, dy in neighbors:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h:
+                    npx = img.getpixel((nx, ny))
+                    if npx[3] > 0:
+                        interior[_rgb_key(npx)] += 1
+            if not interior:
+                draw_ops.set_px(img, x, y, fallback_rgba)
+                continue
+            fill_rgb, _ = interior.most_common(1)[0]
+            ink = ink_map.get(fill_rgb, fallback_rgba)
+            draw_ops.set_px(img, x, y, ink)
+
+
+def finish_production_selective(
+    s: Sprite,
+    buckets: Sequence[tuple[Sequence[ColorLike], ColorLike]],
+    *,
+    fallback: ColorLike,
+    trim_specks: bool = True,
+) -> None:
+    if trim_specks:
+        s.trim_isolated_specks(min_neighbors=0)
+    selective_outside_outline(s, buckets, fallback=fallback)
+    if trim_specks:
         s.trim_isolated_specks(min_neighbors=0)
 
 

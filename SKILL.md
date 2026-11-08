@@ -98,8 +98,34 @@ Ship art that could appear in a commercial indie title, not a tech demo.
 | Process | Minimum **2** preview critique passes before calling an asset done |
 
 **Humanoid heroes / warriors / RPG leads:** mandatory read of
-[humanoid-hero.md](references/humanoid-hero.md) and **[character-api.md](references/character-api.md)** —
-**64×64**, shared `character`/`rig` helpers, **≥2 px** filled limbs, **`finish_outside_outline`**.
+[humanoid-hero.md](references/humanoid-hero.md) and **[character-api.md](references/character-api.md)**.
+
+Pick a **single track** per character (see [platform-fighter.md](references/platform-fighter.md)):
+
+| Track | Canvas | Face | When |
+|-------|--------|------|------|
+| **JRPG Q** | 64×64 | `JrpgHeadLook` + `jrpg_face` / `jrpg_body` | Chibi RPG leads (`ref_youth`, `rose_hero`) |
+| **Platform fighter** | **128×128** | `FighterHeadLook` + `platform_face` / `platform_body` / `platform_scarf` | Side-view combat hero matching **male_hero** reference strips |
+
+Both tracks: `character`/`rig` helpers, **≥2 px** filled limbs, **`finish_production_humanoid`**.
+
+### Developer character knobs (hair, clothes, weapons, clips)
+
+Lock art direction in **`PROMPT.md`** and constants at the top of **`build.py`** — do not
+scatter magic hex or clip counts through draw functions.
+
+| Knob | Set in `build.py` | API |
+|------|-------------------|-----|
+| Hair style / color | `JrpgHeadLook` / `FighterHeadLook` + `CharacterPalette.hair` | `jrpg_face`, `platform_face`, `platform_ref_hair` |
+| Face / eye style | `look=…` + `CharacterPalette.eye` | [jrpg-profile-face.md](references/jrpg-profile-face.md), `FighterHeadLook` |
+| Clothes style / color | `JrpgHeroKnobs.outfit` / `PlatformHeroKnobs.outfit` + shirt/pants/trim ramps | `hero_config`, `platform_outfit` |
+| Shoes | `shoe` id + `boot` ramp | `jrpg_body`, `platform_body` |
+| Weapon type / color | `weapon` id + `weapon` ramp | `platform_weapon` (+ `platform_scarf` when `weapon="scarf"`) |
+| Animations exported | `AnimationPlan.from_table(..., only=, disable=)` | `hero_config.AnimationPlan.tag_on_sprite` |
+
+Full table and copy-paste pattern: **[references/hero-config.md](references/hero-config.md)**.
+Reference implementation: **`pixel-art/ref_youth/`** + filled template **[prompt-example-production.md](references/prompt-example-production.md)**.
+Call `validate_knobs(KNOBS)` once at import to fail fast on typos in style ids.
 
 ### Humanoid implementation checklist (Phase 3)
 
@@ -110,7 +136,7 @@ Before animating clips, lock this pipeline in `build.py`:
 3. **Layer order** — back leg → back arm → weapon (if windup) → torso → front leg → head → arm → weapon → VFX → **`ch.finish_production_humanoid(ink)`** (outline + speck trim).  
 4. **Windup z-order** — `rig.weapon_raised_behind_head(deg)` so baton/blade does not cover the face.  
 5. **Previews** — `preview(..., scale=8, matte="#343848")` so hull ink is visible; **not** shipped to game.  
-6. **Ghosts** — `stamp_silhouette_ghost` with `with_outline=False` on the temp draw.  
+6. **Ghosts** — `stamp_silhouette_ghost(s, w, h, palette, ghost_rgba, draw_fn)`; **`draw_fn` must not** call outline/finish passes.  
 7. **Face read** — [face-read.md](references/face-read.md) + [jrpg-profile-face.md](references/jrpg-profile-face.md): **hair + eye** (no mouth); preview at 8× before animating clips.
 
 Do **not** copy the tiny slime scale or 1 px stick legs for people.
@@ -228,8 +254,10 @@ Index: [references/README.md](references/README.md)
 | **Reference PNG/GIF → prompt → art** | **[platformer-character.md](references/platformer-character.md)** |
 | Canvas sizes, build order, tiles | [patterns.md](references/patterns.md) |
 | Platformer player clips | [platform-hero.md](references/platform-hero.md) |
+| **128×128 scarf fighter (reference strips)** | **[platform-fighter.md](references/platform-fighter.md)** + `pixel-art/male_hero/` |
 | **Humanoid proportions / face** | **[humanoid-hero.md](references/humanoid-hero.md)** + **[face-read.md](references/face-read.md)** |
 | **Character Python API (mandatory for heroes)** | **[character-api.md](references/character-api.md)** |
+| **Hero knobs (hair, outfit, weapon, clips)** | **[hero-config.md](references/hero-config.md)** |
 | Shading, outlines | [techniques.md](references/techniques.md) |
 | Frame counts, puppeting | [animation.md](references/animation.md) |
 | Palettes | [palettes.md](references/palettes.md) |
@@ -241,9 +269,10 @@ Index: [references/README.md](references/README.md)
 
 | Project | What to copy |
 |---------|----------------|
-| `pixel-art/ref_youth/` | Reference screenshot: spiky cyan hair, 2×3 eye, olive tunic |
+| `pixel-art/ref_youth/` | **Canonical `hero_config` JRPG Q** — spiky cyan hair, vertical eye, olive tunic; see `PROMPT.md` |
 | `pixel-art/ref_elder/` | Reference screenshot: puffy hair, beard, hero eye, gold cape |
 | `pixel-art/rose_hero/` | Pink hair, expressive eye, ribbon, dress |
+| `pixel-art/male_hero/` | **Canonical `hero_config` platform fighter** — scarf keys, gi, full clip set; see `PROMPT.md` |
 | `pixel-art/example_tiles/` | TSX + gameplay props |
 | `pixel-art/example_slime/` | API sample only |
 

@@ -2,6 +2,9 @@
 
 **Production standard:** Same rig rules as [humanoid-hero.md](humanoid-hero.md), usually **64×64** for a lead with combat + dash clips (not 48×48 unless the game camera is very tight).
 
+For **128×128** reference-strip fighters (scarf hero, full 10-frame loco), use the
+**[platform-fighter.md](platform-fighter.md)** track and `pixel-art/male_hero/`.
+
 ## Canvas & pivot
 
 - Feet on **`height − 2`** row; locomotion clips stay on that baseline ±1 px.

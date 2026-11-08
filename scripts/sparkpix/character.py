@@ -11,6 +11,7 @@ from sparkpix.canvas import Sprite
 from sparkpix.color import RGBA, ColorLike
 from sparkpix import draw_ops
 from sparkpix.jrpg_face import JrpgHeadLook, draw_jrpg_eye, draw_jrpg_profile_head
+from sparkpix.platform_face import FighterHeadLook, draw_fighter_profile_head
 
 ColorSeq = Sequence[ColorLike]
 
@@ -106,6 +107,40 @@ def torso_hoodie(
         s.rect(hx - 5, y0 - 4, hx + 6, y0 - 1, fill=hood[1])
         s.rect(hx - 4, y0 - 3, hx + 5, y0 - 2, fill=hood[2], only="opaque")
         s.px(hx - 3, y0 - 3, hood[-1], only="opaque")
+
+
+def fighter_head_facing_right(
+    s: Sprite,
+    cx: int,
+    cy: int,
+    *,
+    skin: ColorSeq,
+    hair: ColorSeq,
+    pupil: ColorLike,
+    iris: ColorLike,
+    sclera: ColorLike,
+    paper: ColorLike,
+    blush: ColorLike,
+    look: FighterHeadLook | None = None,
+    hair_sway: int = 0,
+    layers: str = "full",
+) -> None:
+    """Platform fighter head (+X): forward eye + spiky hair + optional blush."""
+    draw_fighter_profile_head(
+        s,
+        cx,
+        cy,
+        skin=skin,
+        hair=hair,
+        pupil=pupil,
+        iris=iris,
+        sclera=sclera,
+        paper=paper,
+        blush=blush,
+        look=look,
+        hair_sway=hair_sway,
+        layers=layers,
+    )
 
 
 def profile_head_facing_right(
@@ -311,6 +346,19 @@ def finish_production_humanoid(s: Sprite, ink: ColorLike, *, trim_specks: bool =
     from sparkpix import render as rd
 
     rd.finish_production_pass(s, ink, trim_specks=trim_specks)
+
+
+def finish_selective_humanoid(
+    s: Sprite,
+    buckets: Sequence[tuple[Sequence[ColorLike], ColorLike]],
+    *,
+    fallback: ColorLike,
+    trim_specks: bool = True,
+) -> None:
+    """Same-hue selective hull outline (platform / JRPG heroes)."""
+    from sparkpix import render as rd
+
+    rd.finish_production_selective(s, buckets, fallback=fallback, trim_specks=trim_specks)
 
 
 def thin_leg_column_count(

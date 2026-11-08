@@ -58,13 +58,14 @@ def apply_shift(
     elbow: Tuple[int, int],
     hand: Tuple[int, int],
     head: Tuple[int, int],
+    neck: Tuple[int, int] | None = None,
 ) -> dict[str, Tuple[int, int]]:
     """Apply vertical breath/jump (dy) and horizontal lean to all rig points."""
 
     def p(pt: Tuple[int, int]) -> Tuple[int, int]:
         return pt[0] + lean, pt[1] + dy
 
-    return {
+    out = {
         "foot_f": p(foot_f),
         "foot_b": p(foot_b),
         "knee_f": p(knee_f),
@@ -75,6 +76,9 @@ def apply_shift(
         "hand": p(hand),
         "head": p(head),
     }
+    if neck is not None:
+        out["neck"] = p(neck)
+    return out
 
 
 def shift_tuple(pt: Tuple[int, int], dx: int, dy: int = 0) -> Tuple[int, int]:

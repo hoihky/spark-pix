@@ -30,7 +30,18 @@ cp pixel-art/$PACK/out/*.png pixel-art/$PACK/out/*.spark-atlas.json ../spark/ass
 ## CI / pre-push check
 
 ```bash
-./scripts/audit_privacy.sh
+./scripts/audit_privacy.sh           # tracked files only (CI / pre-push)
+./scripts/audit_privacy.sh --all      # full workspace (untracked packs, new scripts)
 ```
 
-Uses `git ls-files` when the repo is initialized (only tracked paths). Exits non-zero on real `/Users/<name>` or `/home/<name>` paths and common secret patterns.
+Exits non-zero on:
+
+- Real `/Users/<name>` or `/home/<name>` paths
+- Cursor-encoded project folder slugs under `~/.cursor/projects/` (username + machine path, no leading slash)
+- Common secret / token patterns
+
+**Gap:** Default mode only scans **git-tracked** files. Run `--all` before your first commit of a new pack so untracked `build.py` / scripts are included.
+
+Optional env (local only, do not commit): `SPARK_PIX_REF_ASSETS` for reference strip PNGs outside `_study/`.
+
+Latest workspace audit log: [privacy-audit-2026-11-08.md](privacy-audit-2026-11-08.md).
